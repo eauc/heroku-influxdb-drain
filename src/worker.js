@@ -135,7 +135,9 @@ exports.process_heroku_log = function process_heroku_log(body, source) {
             const len = parseInt(len_str);
             if (isNaN(len)) {
                 log.debug(`-------- BODY START ------\n${body}\n-------- BODY END ---------\n`);
-                throw new Error("Unable to parse length of framed syslog line: " + len_str);
+                log.error(`Unable to parse message length at position ${pos} text found '${len_str}'`);
+                new_pos = -1;
+                continue;
             }
             const message = buffer.substring(new_pos + 1, new_pos + len);
             messages.push(syslogParser.parse(message));
