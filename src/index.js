@@ -60,11 +60,14 @@ function start_prometheus(app) {
  */
 function populate_prometheus(points) {
     points.forEach((p) => {
-        const gauge = new client.Gauge({
-            name: p.name,
-            help: p.help || 'Heroku metric',
-            labelNames: Object.keys(p.labels || {})
-        });
+        let gauge = client.register.getSingleMetric(p.name);
+        if (!gauge) {
+            gauge = new client.Gauge({
+                name: p.name,
+                help: p.help || 'Heroku metric',
+                labelNames: Object.keys(p.labels || {})
+            });
+        }
         gauge.set(p.labels, p.value, p.timestamp);
     });
 }
