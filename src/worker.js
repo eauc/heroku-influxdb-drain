@@ -50,9 +50,10 @@ function handle_heroku_runtime_metrics(message, labels) {
         .split(" ").map((item) => {
             if (item.indexOf("sample#") !== -1) {
                 const [key, value] = item.substring(7).split("=");
+                const metric_name = key.replace(/[\W_]+/g,"_");
                 return {
                     timestamp: message.time,
-                    name: key,
+                    name: metric_name,
                     labels: labels,
                     value: parse_size_value(value)
                 }
@@ -104,6 +105,7 @@ function handle_heroku_router(message, labels) {
  * @returns Array of influx IPoint
  */
 function message_to_points(message, source) {
+    console.log("message", message);
     const labels = {
         host: message.host,
         app: message.appName,
