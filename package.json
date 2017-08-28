@@ -1,0 +1,29 @@
+{
+  "name": "heroku-prometheus-drain",
+  "version": "1.0.0",
+  "description": "Heroku prometheus log drain",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "mocha",
+    "start": "node src/index",
+    "lint": "eslint src/**/* test/**/*"
+  },
+  "author": "David Saradini",
+  "license": "MIT",
+  "dependencies": {
+    "basic-auth": "^1.1.0",
+    "body-parser": "1.17.2",
+    "express": "4.15.4",
+    "filesize-parser": "1.4.1",
+    "glossy": "0.1.7",
+    "influx": "5.0.7",
+    "loglevel": "^1.4.1",
+    "parse-duration": "^0.1.1",
+    "prom-client": "^10.0.4"
+  },
+  "devDependencies": {
+    "eslint": "^4.5.0",
+    "jshint": "2.9.5",
+    "mocha": "^3.5.0"
+  }
+}
