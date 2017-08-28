@@ -119,18 +119,4 @@ function start_server() {
     })
 }
 
-
-influx.getDatabaseNames()
-    .then(names => {
-        if (!names.includes(influx_database)) {
-            log.info(`Creating database "${influx_database}"`);
-            return influx.createDatabase(influx_database);
-        }
-    })
-    .then(() => {
-        start_server();
-    })
-    .catch(err => {
-        log.error(`Error creating Influx database! ${err}`);
-        process.exit(-1);
-    });
+start_server();

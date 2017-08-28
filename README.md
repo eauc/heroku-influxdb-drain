@@ -32,3 +32,17 @@ i.e. https://ACCESS_TOKEN@my-server/logs/:source/
 
     $ heroku labs:enable log-runtime-metrics --app APP_NAME
 
+
+## Local testing
+
+Start your server
+
+     npm start
+
+Send fake data
+
+     curl -X POST -H "Content-Type: application/logplex-1" --data @./samples/logs.txt  http://jojo@localhost:3030/logs/test/ -v
+
+Get back data
+
+    curl http://jojo@localhost:3030/metrics/
