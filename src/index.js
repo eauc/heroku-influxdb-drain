@@ -60,14 +60,12 @@ function start_prometheus(app) {
  */
 function populate_prometheus(points) {
     points.forEach((p) => {
-        if (p.fields.value) {
-            const gauge = new client.Gauge({
-                name: p.name,
-                help: p.help || 'Heroku metric',
-                labelNames: Object.keys(p.tags || {})
-            });
-            gauge.set(p.labels, p.value, p.timestamp);
-        }
+        const gauge = new client.Gauge({
+            name: p.name,
+            help: p.help || 'Heroku metric',
+            labelNames: Object.keys(p.labels || {})
+        });
+        gauge.set(p.labels, p.value, p.timestamp);
     });
 }
 
@@ -80,7 +78,10 @@ function start_server() {
     const app = express();
 
     app.use(auth_middleware);
-    app.use(bodyParser.text({type: 'application/logplex-1'}));
+    app.use(bodyParser.text({
+        defaultCharset: 'ascii',
+        type: 'application/logplex-1'
+    }));
 
     app.post('/logs/:source/', auth_middleware, (req, res) => {
         const source = req.params.source;

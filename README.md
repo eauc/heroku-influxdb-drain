@@ -41,7 +41,7 @@ Start your server
 
 Send fake data
 
-     curl -X POST -H "Content-Type: application/logplex-1" --data @./samples/logs.txt  http://jojo@localhost:3030/logs/test/ -v
+     curl -X POST -H "Content-Type: application/logplex-1" --data @./samples/sample0.txt  http://jojo@localhost:3030/logs/test/ -v
 
 Get back data
 
