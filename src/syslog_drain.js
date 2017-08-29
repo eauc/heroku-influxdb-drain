@@ -105,7 +105,6 @@ function handle_heroku_router(message, labels) {
  * @returns Array of influx IPoint
  */
 function message_to_points(message, source) {
-    console.log("message", message);
     const labels = {
         host: message.host,
         app: message.appName,

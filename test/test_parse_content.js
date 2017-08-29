@@ -1,5 +1,8 @@
 const assert = require('assert');
-const worker = require("../src/worker");
+const worker = require("../src/syslog_drain");
+const log = require('loglevel');
+
+log.setLevel("silent", true);
 
 
 describe('Heroku log parser', function() {
