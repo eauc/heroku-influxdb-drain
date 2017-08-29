@@ -19,12 +19,12 @@ const DYNO_STATES = {
 };
 
 
-if (process.env.DEBUG_SYSLOG === "true") {
+if (process.env.DEBUG_SYSLOG) {
     log.warn("Syslog log drain is in debug (DEBUG_SYSLOG=true), this may impact memory");
 }
 
 function collect_messages(source, body) {
-    if (process.env.DEBUG_SYSLOG === "true") {
+    if (process.env.DEBUG_SYSLOG) {
         const collector = messagesBySources[source] || [];
         collector.unshift(body);
         messagesBySources[source] = collector.slice(0, MAX_MESSAGE_SIZE);
@@ -263,7 +263,7 @@ exports.collector_text = function collector_text(source) {
 
 
 exports.collector_index = function collector_index() {
-    if (process.env.DEBUG_SYSLOG !== "true") {
+    if (process.env.DEBUG_SYSLOG) {
         return `<html><body><h1>Syslog debug not activated</h1><p>Set SYSLOG_DEBUG=true to enable it.</p></body>`;
     }
     const collectors = Object.keys(messagesBySources).map((c) => {
