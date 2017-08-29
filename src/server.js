@@ -139,6 +139,13 @@ module.exports.start_server = function start_server(port) {
             .send(syslog_drain.collector_text(source));
     });
 
+    app.get('/_syslog_debug/', auth_middleware, (req, res) => {
+        const source = req.params.source;
+        res.status(200)
+            .set("Content-Type", "text/html")
+            .send(syslog_drain.collector_index());
+    });
+
     start_prometheus(app);
 
     return app.listen(port, (err) => {

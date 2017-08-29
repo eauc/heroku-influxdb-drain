@@ -260,3 +260,22 @@ exports.process_heroku_log = function process_heroku_log(body, source) {
 exports.collector_text = function collector_text(source) {
     return (messagesBySources[source] || []).join("\n--------------------------------------------------------\n");
 };
+
+
+exports.collector_index = function collector_index() {
+    if (process.env.DEBUG_SYSLOG !== "true") {
+        return `<html><body><h1>Syslog debug not activated</h1><p>Set SYSLOG_DEBUG=true to enable it.</p></body>`;
+    }
+    const collectors = Object.keys(messagesBySources).map((c) => {
+        return `<li><a href="/_syslog_debug/${c}/">${c}</a></li>`;
+    });
+    return `
+        <html>
+            <body>
+                <h1>Syslog debug collector list</h1>
+                 <ul>
+                    ${collectors}
+                </ul>
+            </body>
+        </html>`;
+};
