@@ -2,11 +2,14 @@
 
 const request = require('supertest');
 const assert = require("assert");
+const log = require('loglevel');
+
+log.setLevel("silent");
 
 const auth = process.env.ACCESS_TOKEN = "fake-one";
 
 
-describe('Express server', function () {
+describe('Push log server', function () {
     let server;
 
     beforeEach(function () {
@@ -17,7 +20,7 @@ describe('Express server', function () {
         server.close();
     });
 
-    it('should be able to post logs via /push-post/SOURCE/', function testSlash() {
+    it('should be able to post logs via /push-post/SOURCE/', () => {
         return request(server)
             .post('/push-logs/test-source/')
             .auth(auth, '')
@@ -43,7 +46,7 @@ describe('Express server', function () {
             });
     });
 
-    it('401 without authorization', function testPath() {
+    it('401 without authorization', () => {
         return request(server)
             .get('/')
             .expect(401);

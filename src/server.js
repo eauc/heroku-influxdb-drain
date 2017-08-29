@@ -39,6 +39,8 @@ function auth_middleware(req, res, next) {
 function start_prometheus(app) {
     const collectDefaultMetrics = client.collectDefaultMetrics;
     const register = client.register;
+    app.register = register;
+    app.register.clear();
 
     collectDefaultMetrics({register});
 
@@ -51,16 +53,18 @@ function start_prometheus(app) {
 
 /**
  * Contert points to prometheus gauges
+ * @param app express app
  * @param points Array of points
  */
-function populate_prometheus(points) {
+function populate_prometheus(app, points) {
     points.forEach((p) => {
-        let gauge = client.register.getSingleMetric(p.name);
+        let gauge = app.register.getSingleMetric(p.name);
         if (!gauge) {
             gauge = new client.Gauge({
                 name: p.name,
                 help: p.help || 'Heroku metric',
-                labelNames: Object.keys(p.labels || {})
+                labelNames: Object.keys(p.labels || {}),
+                registers: [ app.register ]
             });
         }
         gauge.set(p.labels, p.value, p.timestamp);
@@ -94,7 +98,7 @@ module.exports.start_server = function start_server(port) {
                         },
                         value: points.length
                     });
-                    return populate_prometheus(points);
+                    return populate_prometheus(app, points);
                 }
             })
             .then(() => {
@@ -124,8 +128,15 @@ module.exports.start_server = function start_server(port) {
                 p.labels = labels;
             }
         });
-        populate_prometheus(points);
+        populate_prometheus(app, points);
         res.status(204).end();
+    });
+
+    app.get('/_syslog_debug/:source/', auth_middleware, (req, res) => {
+        const source = req.params.source;
+        res.status(200)
+            .set("Content-Type", "text/plain")
+            .send(syslog_drain.collector_text(source));
     });
 
     start_prometheus(app);

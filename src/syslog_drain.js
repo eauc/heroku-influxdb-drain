@@ -5,6 +5,22 @@ const durationParser = require('parse-duration');
 const log = require('loglevel');
 
 
+const MAX_MESSAGE_SIZE = 50;
+
+const messagesBySources = {};
+
+if (process.env.DEBUG_SYSLOG === "true") {
+    log.warn("Syslog log drain is in debug (DEBUG_SYSLOG=true), this may impact memory");
+}
+
+function collect_messages(source, body) {
+    if (process.env.DEBUG_SYSLOG === "true") {
+        const collector = messagesBySources[source] || [];
+        collector.unshift(body);
+        messagesBySources[source] = collector.slice(0, MAX_MESSAGE_SIZE);
+    }
+}
+
 /**
  * Parse log value from human readable size form i.e. 25.6MB
  * @param value the string value
@@ -110,6 +126,7 @@ function message_to_points(message, source) {
         app: message.appName,
         source: source
     };
+
     if (message.message.indexOf("sample#") !== -1) {
         return handle_heroku_runtime_metrics(message, labels);
     } else if (message.message.indexOf("protocol=https") !== -1) {
@@ -126,6 +143,7 @@ function message_to_points(message, source) {
  * @returns {Promise}
  */
 exports.process_heroku_log = function process_heroku_log(body, source) {
+    collect_messages(source, body);
     return new Promise((resolve) => {
         const buffer = body;
         const messages = [];
@@ -141,6 +159,7 @@ exports.process_heroku_log = function process_heroku_log(body, source) {
                 continue;
             }
             const message = buffer.substring(new_pos + 1, new_pos + len);
+
             messages.push(syslogParser.parse(message));
             pos = new_pos + len;
             new_pos = body.indexOf(" ", pos);
@@ -152,4 +171,8 @@ exports.process_heroku_log = function process_heroku_log(body, source) {
             .reduce((a, b) => a.concat(b), []);
         resolve(points);
     });
+};
+
+exports.collector_text = function collector_text(source) {
+    return (messagesBySources[source] || []).join("\n--------------------------------------------------------\n");
 };
