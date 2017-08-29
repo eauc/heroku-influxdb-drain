@@ -154,6 +154,11 @@ function handle_heroku_router(message, labels) {
             name: "router_access_bytes",
             labels: all_labels,
             value: parse_size_value(key_values["bytes"])
+        }, {
+            timestamp: message.time,
+            name: "router_access_count",
+            labels: all_labels,
+            value: 1
         }
     ];
 }
