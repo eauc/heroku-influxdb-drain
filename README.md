@@ -21,6 +21,14 @@ Change log level, set to 'info' for default.
 i.e. https://ACCESS_TOKEN@my-server/logs/:source/
 
 
+### ```SYYLOG_DEBUG```
+
+
+(optional) set to "true" to be able to debug received syslog messages, inspect result with
+
+    GET https://ACCESS_TOKEN@my-server/_syslog_debug/:source/
+
+
 ## Setup
 
 ### Enable heroku https log drains
