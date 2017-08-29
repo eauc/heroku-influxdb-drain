@@ -9,6 +9,16 @@ const MAX_MESSAGE_SIZE = 50;
 
 const messagesBySources = {};
 
+
+const DYNO_STATES = {
+    "crashed": -2,
+    "down": -1,
+    "idle": 0,
+    "starting": 1,
+    "up": 2
+};
+
+
 if (process.env.DEBUG_SYSLOG === "true") {
     log.warn("Syslog log drain is in debug (DEBUG_SYSLOG=true), this may impact memory");
 }
@@ -56,6 +66,39 @@ function parse_duration_value(value) {
 }
 
 /**
+ * Parse heroku release information
+ * @param value message
+ * @returns {[version, user_email]}
+ */
+function parse_heroku_release(value) {
+    // Release v16 created by user test@test.com
+    const releaseRegexp = new RegExp(`^Release (v[0-9]+) created by user (.*)$`);
+    const match = releaseRegexp.exec(value);
+    if (!match) {
+        return null;
+    }
+    return [match[1], match[2]];
+}
+exports.parse_heroku_release = parse_heroku_release;
+
+
+/**
+ * Parse heroku dyno state changed
+ * @param value message
+ * @returns {[old_state, new_state]}
+ */
+function parse_heroku_state_changed(value) {
+    // State changed from starting to up
+    const releaseRegexp = new RegExp(`^State changed from ([a-zA-Z0-9_]+) to ([a-zA-Z0-9_]+)$`);
+    const match = releaseRegexp.exec(value);
+    if (!match) {
+        return null;
+    }
+    return [match[1], match[2]];
+}
+exports.parse_heroku_state_changed = parse_heroku_state_changed;
+
+/**
  * handle heroku log-runtime-metrics
  * @param message Heroku parsed message
  * @param labels label associated to the message
@@ -79,6 +122,7 @@ function handle_heroku_runtime_metrics(message, labels) {
         })
         .filter((i) => i !== null);
 }
+exports.handle_heroku_runtime_metrics = handle_heroku_runtime_metrics;
 
 /**
  * handle heroku logs router
@@ -114,6 +158,42 @@ function handle_heroku_router(message, labels) {
     ];
 }
 
+
+function handle_heroku_release(message, labels) {
+    const result = parse_heroku_release(message.message);
+    if (!result) {
+        return [];
+    }
+    const all_labels = Object.assign({
+        user: result[1],
+        version: result[0]
+    }, labels);
+    return [
+        {
+            timestamp: message.time,
+            name: "heroku_release",
+            labels: all_labels,
+            value: 1
+        }
+    ]
+}
+
+
+function handle_heroku_state_changed(message, labels) {
+    const result = parse_heroku_state_changed(message.message);
+    if (!result) {
+        return [];
+    }
+    return [
+        {
+            timestamp: message.time,
+            name: "heroku_state",
+            labels: labels,
+            value: DYNO_STATES[result[1]] || -10
+        }
+    ]
+}
+
 /**
  * Convert a syslog message to a influxDB point
  * @param message syslog ( glossy ) message
@@ -131,6 +211,10 @@ function message_to_points(message, source) {
         return handle_heroku_runtime_metrics(message, labels);
     } else if (message.message.indexOf("protocol=https") !== -1) {
         return handle_heroku_router(message, labels);
+    } else if (message.message.indexOf("created by user") !== -1) {
+        return handle_heroku_release(message, labels);
+    } else if (message.message.indexOf("State changed from") !== -1) {
+        return handle_heroku_state_changed(message, labels);
     }
     return [];
 }
