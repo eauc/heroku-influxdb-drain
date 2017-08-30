@@ -19,7 +19,6 @@ describe('Heroku log parser', function() {
                     return acc;
                 }, {});
                 assert.deepEqual(table.memory_total.labels, {
-                    host: 'host',
                     app: 'app',
                     process: "web",
                     pid: "web.3",
@@ -55,7 +54,6 @@ describe('Heroku log parser', function() {
             .then((points) => {
                 assert.deepEqual(points[0].labels, {
                     "app": "app",
-                    "host": "host",
                     "process": "web",
                     "pid": "web.3",
                     "source": "test-source",
@@ -70,7 +68,6 @@ describe('Heroku log parser', function() {
             .then((points) => {
                 assert.deepEqual(points[0].labels, {
                     "app": "app",
-                    "host": "host",
                     "pid": "api",
                     "process": "api",
                     "source": "test-source",
@@ -80,7 +77,7 @@ describe('Heroku log parser', function() {
                 assert.deepEqual(points[0].value, 1);
             })
     });
-    
+
     it('should raise if a log is empty', function() {
         const message = ``;
         return syslog_drain.process_heroku_log(message, "test-source")

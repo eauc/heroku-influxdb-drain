@@ -16,7 +16,7 @@
     "express": "4.15.4",
     "filesize-parser": "1.4.1",
     "glossy": "0.1.7",
-    "influx": "5.0.7",
+    "influx": "^5.0.7",
     "loglevel": "^1.4.1",
     "parse-duration": "^0.1.1",
     "prom-client": "^10.0.4"

@@ -7,6 +7,8 @@ const syslog_drain = require("./syslog_drain");
 const log = require('loglevel');
 const basicAuth = require('basic-auth');
 const client = require('prom-client');
+const influx = require("./influx_adaptor");
+
 
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 
@@ -52,7 +54,7 @@ function start_prometheus(app) {
 }
 
 /**
- * Contert points to prometheus gauges
+ * Set points to prometheus gauges
  * @param app express app
  * @param points Array of points
  */
@@ -68,6 +70,26 @@ function populate_prometheus(app, points) {
             });
         }
         gauge.set(p.labels, p.value, p.timestamp);
+    });
+}
+
+
+/**
+ * Sent points to influxDB
+ * @param app express app
+ * @param points Array of points
+ */
+function populate_influx(app, points) {
+    return influx.send(points);
+}
+
+
+function process_points(app, points) {
+    return Promise.resolve(
+        populate_prometheus(app, points)
+    )
+    .then(() => {
+        return populate_influx(app, points);
     });
 }
 
@@ -98,7 +120,7 @@ module.exports.start_server = function start_server(port) {
                         },
                         value: points.length
                     });
-                    return populate_prometheus(app, points);
+                    return process_points(app, points);
                 }
             })
             .then(() => {
@@ -128,8 +150,14 @@ module.exports.start_server = function start_server(port) {
                 p.labels = labels;
             }
         });
-        populate_prometheus(app, points);
-        res.status(204).end();
+        return process_points(app, points)
+            .then(() => {
+                res.status(204).end();
+            })
+            .catch(err => {
+                log.error(err, err.stack);
+                res.status(400).send(err.message);
+            })
     });
 
     app.get('/_syslog_debug/:source/', auth_middleware, (req, res) => {
@@ -140,13 +168,13 @@ module.exports.start_server = function start_server(port) {
     });
 
     app.get('/_syslog_debug/', auth_middleware, (req, res) => {
-        const source = req.params.source;
         res.status(200)
             .set("Content-Type", "text/html")
             .send(syslog_drain.collector_index());
     });
 
     start_prometheus(app);
+    influx.init(app);
 
     const server = app.listen(port, (err) => {
         if (!err) {

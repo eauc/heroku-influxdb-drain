@@ -115,6 +115,7 @@ function handle_heroku_runtime_metrics(message, labels) {
                     timestamp: message.time,
                     name: metric_name,
                     labels: labels,
+                    tags: labels,
                     value: parse_size_value(value)
                 }
             } else {
@@ -149,17 +150,24 @@ function handle_heroku_router(message, labels) {
             timestamp: message.time,
             name: "router_access_time",
             labels: all_labels,
+            tags: all_labels,
             value: parse_duration_value(key_values["service"])
         }, {
             timestamp: message.time,
             name: "router_access_bytes",
             labels: all_labels,
+            tags: all_labels,
             value: parse_size_value(key_values["bytes"])
         }, {
             timestamp: message.time,
             name: "router_access_count",
             labels: all_labels,
-            value: 1
+            tags: all_labels,
+            value: 1,
+            fields: {
+                method: key_values["method"].toLowerCase(),
+                status: parseInt(key_values["status"])
+            }
         }
     ];
 }
@@ -179,7 +187,11 @@ function handle_heroku_release(message, labels) {
             timestamp: message.time,
             name: "heroku_release",
             labels: all_labels,
-            value: 1
+            tags: labels,
+            value: 1,
+            fields: {
+                version: result[0]
+            }
         }
     ]
 }
@@ -195,7 +207,12 @@ function handle_heroku_state_changed(message, labels) {
             timestamp: message.time,
             name: "heroku_state",
             labels: labels,
-            value: DYNO_STATES[result[1]] || -10
+            tags: labels,
+            value: DYNO_STATES[result[1]] || -10,
+            fields: {
+                old_state: result[1],
+                new_state: result[0],
+            }
         }
     ]
 }
@@ -208,7 +225,6 @@ function handle_heroku_state_changed(message, labels) {
  */
 function message_to_points(message, source) {
     const labels = {
-        host: message.host,
         app: message.appName,
         source: source
     };

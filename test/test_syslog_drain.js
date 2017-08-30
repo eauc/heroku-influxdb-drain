@@ -48,7 +48,7 @@ describe('Syslog drain server', function () {
                     .auth(auth, '');
             })
             .then((res) => {
-                assert.notEqual(res.text.indexOf(`service_dataset_count{host="host",app="app",source="test-source"} 19071`), -1);
+                assert.notEqual(res.text.indexOf(`service_dataset_count{app="app",source="test-source"} 19071`), -1);
             });
     });
 

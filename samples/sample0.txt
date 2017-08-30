@@ -1,4 +1,4 @@
 264 <2>1 2017-08-22T06:40:26+00:00 host app web.3 - at=info method=HEAD path="/api/monitor/" host=api-staging.myotest.cloud request_id=fec8bbaa-1787-4f16-8897-62dbb7e7b220 fwd="104.238.136.194" dyno=web.1 connect=1ms service=115ms status=200 bytes=1742 protocol=https
-83 <40>1 2012-11-30T06:45:29+00:00 host app web.3 - State changed from starting to up
-119 <40>1 2012-11-30T06:45:26+00:00 host app web.3 - Starting process with command `bundle exec rackup config.ru -p 24405`
+83 <40>1 2017-11-30T06:45:29+00:00 host app web.3 - State changed from starting to up
+119 <40>1 2017-11-30T06:45:26+00:00 host app web.3 - Starting process with command `bundle exec rackup config.ru -p 24405`
 323 <2>1 2017-08-22T06:40:26+00:00 host app web.3 - source=web.1 dyno=heroku.55681600.4fce2580-ea9f-492a-8837-a6f161bae67b sample#memory_total=254.70MB sample#memory_rss=242.35MB sample#memory_cache=3.37MB sample#memory_swap=8.99MB sample#memory_pgpgin=134057pages sample#memory_pgpgout=89550pages sample#memory_quota=512.00MB
