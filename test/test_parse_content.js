@@ -19,7 +19,11 @@ describe('Heroku log parser', function() {
                     return acc;
                 }, {});
                 assert.deepEqual(table.memory_total.labels, {
-                    host: 'host', app: 'app', source: 'test-source'
+                    host: 'host',
+                    app: 'app',
+                    process: "web",
+                    pid: "web.3",
+                    source: 'test-source'
                 });
                 assert.deepEqual(table.memory_total.value, 267072307);
                 const all = points.map((p) => p.name).sort();
@@ -52,6 +56,8 @@ describe('Heroku log parser', function() {
                 assert.deepEqual(points[0].labels, {
                     "app": "app",
                     "host": "host",
+                    "process": "web",
+                    "pid": "web.3",
                     "source": "test-source",
                 });
                 assert.deepEqual(points[0].value, 2);
@@ -65,6 +71,8 @@ describe('Heroku log parser', function() {
                 assert.deepEqual(points[0].labels, {
                     "app": "app",
                     "host": "host",
+                    "process": "web",
+                    "pid": "web.3",
                     "source": "test-source",
                     "version": "v121",
                     "user": "test@test.com"

@@ -148,12 +148,14 @@ module.exports.start_server = function start_server(port) {
 
     start_prometheus(app);
 
-    return app.listen(port, (err) => {
+    const server = app.listen(port, (err) => {
         if (!err) {
             log.info(`Starting prometheus heroku logs aggregator on port ${port}`);
         } else {
             log.error(`Error starting aggregator server! ${err}`);
             process.exit(-1);
         }
-    })
+    });
+    server.registry = app.register;
+    return server;
 };

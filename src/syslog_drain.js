@@ -211,6 +211,10 @@ function message_to_points(message, source) {
         app: message.appName,
         source: source
     };
+    if (message.pid) {
+        labels["process"] = message.pid.split(".")[0];
+        labels["pid"] = message.pid;
+    }
 
     if (message.message.indexOf("sample#") !== -1) {
         return handle_heroku_runtime_metrics(message, labels);

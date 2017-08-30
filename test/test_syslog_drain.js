@@ -21,6 +21,15 @@ describe('Syslog drain server', function () {
         server.close();
     });
 
+    function pushMessage(message) {
+        return request(server)
+            .post('/logs/test-source/')
+            .auth(auth, '')
+            .set('Content-Type', 'application/logplex-1')
+            .send(message)
+            .expect(204);
+    }
+
     it('should be able to post logs via /logs/SOURCE/', () => {
         const message = `79 <2>1 2012-11-30T06:45:29+00:00 host app - - sample#service.dataset_count=19071`;
         return request(server)
@@ -56,4 +65,12 @@ describe('Syslog drain server', function () {
                 assert.notEqual(res.text.indexOf(message), -1);
             });
     });
+
+    it("should be able to parse state changes", () => {
+        return pushMessage(`102 <45>1 2017-08-30T07:11:32.216326+00:00 host heroku scheduler.9200 - State changed from starting to up`)
+            .then(() => {
+                const gauge = server.registry.getSingleMetric("heroku_state");
+                assert.ok(gauge);
+            })
+    })
 });
