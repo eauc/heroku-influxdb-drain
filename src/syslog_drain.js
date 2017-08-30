@@ -15,7 +15,8 @@ const DYNO_STATES = {
     "down": -1,
     "idle": 0,
     "starting": 1,
-    "up": 2
+    "up": 2,
+    "complete": 3
 };
 
 
@@ -251,8 +252,7 @@ exports.process_heroku_log = function process_heroku_log(body, source) {
                 new_pos = -1;
                 continue;
             }
-            const message = buffer.substring(new_pos + 1, new_pos + len);
-
+            const message = buffer.substring(new_pos + 1, new_pos + len + 1).trim();
             messages.push(syslogParser.parse(message));
             pos = new_pos + len;
             new_pos = body.indexOf(" ", pos);

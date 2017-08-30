@@ -10,6 +10,10 @@ const assert = require("assert");
 const auth = process.env.ACCESS_TOKEN = "fake-one";
 
 
+function values(obj) {
+    return Object.keys(obj).map((k) => obj[k]);
+}
+
 describe('Syslog drain server', function () {
     let server;
 
@@ -72,5 +76,14 @@ describe('Syslog drain server', function () {
                 const gauge = server.registry.getSingleMetric("heroku_state");
                 assert.ok(gauge);
             })
-    })
+    });
+
+    it ("should be able to parse completed state", () => {
+        return pushMessage(`102 <45>1 2017-08-30T07:08:55.471533+00:00 host heroku scheduler.6388 - State changed from up to complete`)
+            .then(() => {
+                const gauge = server.registry.getSingleMetric("heroku_state");
+                assert.ok(gauge);
+                assert.equal(values(gauge.hashMap)[0].value, 3);
+            })
+    });
 });
