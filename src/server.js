@@ -6,8 +6,8 @@ const bodyParser = require("body-parser");
 const syslog_drain = require("./syslog_drain");
 const log = require('loglevel');
 const basicAuth = require('basic-auth');
-const client = require('prom-client');
 const influx = require("./influx_adaptor");
+const prometheus = require("./prometheus_adaptor");
 
 
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
@@ -20,7 +20,13 @@ const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
  *    help: "metric help" (Optional)
  *    value: "metric value",
  *    timestamp: metric timestamp as Date ( optional, now if not set )
- *    labels: { (Optional key-value labels)
+ *    labels: { (Optional key-value prometheus labels)
+ *      "key": "value"
+ *    },
+ *    tags: { (Optional key-value influxdb tags)
+ *      "key": "value"
+ *    },
+ *    fields { (Optional key-value influxdb fields, user value: this.value by default )
  *      "key": "value"
  *    }
  * }
@@ -38,59 +44,14 @@ function auth_middleware(req, res, next) {
 }
 
 
-function start_prometheus(app) {
-    const collectDefaultMetrics = client.collectDefaultMetrics;
-    const register = client.register;
-    app.register = register;
-    app.register.clear();
-
-    collectDefaultMetrics({register});
-
-    app.get('/metrics', (req, res) => {
-        res.set('Content-Type', register.contentType);
-        res.end(register.metrics());
-    });
-    log.info("Starting prometheus /metrics route");
-}
-
-/**
- * Set points to prometheus gauges
- * @param app express app
- * @param points Array of points
- */
-function populate_prometheus(app, points) {
-    points.forEach((p) => {
-        let gauge = app.register.getSingleMetric(p.name);
-        if (!gauge) {
-            gauge = new client.Gauge({
-                name: p.name,
-                help: p.help || 'Heroku metric',
-                labelNames: Object.keys(p.labels || {}),
-                registers: [ app.register ]
-            });
-        }
-        gauge.set(p.labels, p.value, p.timestamp);
-    });
-}
-
-
-/**
- * Sent points to influxDB
- * @param app express app
- * @param points Array of points
- */
-function populate_influx(app, points) {
-    return influx.send(points);
-}
-
-
 function process_points(app, points) {
-    return Promise.resolve(
-        populate_prometheus(app, points)
-    )
-    .then(() => {
-        return populate_influx(app, points);
-    });
+    return Promise.resolve()
+        .then(() => {
+            return prometheus.send(points, app);
+        })
+        .then(() => {
+            return influx.send(points);
+        });
 }
 
 /**
@@ -173,7 +134,7 @@ module.exports.start_server = function start_server(port) {
             .send(syslog_drain.collector_index());
     });
 
-    start_prometheus(app);
+    prometheus.init(app);
     influx.init(app);
 
     const server = app.listen(port, (err) => {
