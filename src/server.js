@@ -73,16 +73,17 @@ module.exports.start_server = function start_server(port) {
         const source = req.params.source;
         syslog_drain.process_heroku_log(req.body, source)
             .then((points) => {
-                if (points.length > 0) {
-                    points.push({
-                        name: "metrics_received",
-                        labels: {
-                            source: source
-                        },
-                        value: points.length
-                    });
-                    return process_points(app, points);
-                }
+                points.push({
+                    name: "metrics_received",
+                    labels: {
+                        source: source
+                    },
+                    value: points.length,
+                    fields: {
+                        state: 1
+                    }
+                });
+                return process_points(app, points);
             })
             .then(() => {
                 res.status(204).end();
