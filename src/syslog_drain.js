@@ -100,6 +100,20 @@ function parse_heroku_state_changed(value) {
 exports.parse_heroku_state_changed = parse_heroku_state_changed;
 
 /**
+ * Parse heroku dyno errors
+ * @param value message
+ * @returns error code
+ */
+function parse_heroku_errors(value) {
+    const releaseRegexp = new RegExp(`^Error ([a-zA-Z0-9_]+) (.*)`);
+    const match = releaseRegexp.exec(value);
+    if (!match) {
+        return null;
+    }
+    return match[1];
+}
+
+/**
  * handle heroku log-runtime-metrics
  * @param message Heroku parsed message
  * @param tags tags associated to the message
@@ -124,6 +138,7 @@ function handle_heroku_runtime_metrics(message, tags) {
         .filter((i) => i !== null);
 }
 exports.handle_heroku_runtime_metrics = handle_heroku_runtime_metrics;
+
 
 /**
  * handle heroku logs router
@@ -198,6 +213,23 @@ function handle_heroku_state_changed(message, tags) {
     ]
 }
 
+function handle_heroku_errors(message, tags) {
+    const result = parse_heroku_errors(message.message);
+    if (!result) {
+        return [];
+    }
+    return [
+        {
+            timestamp: message.time,
+            name: "heroku_error",
+            tags: tags,
+            fields: {
+                error: result
+            }
+        }
+    ]
+}
+
 /**
  * Convert a syslog message to a influxDB point
  * @param message syslog ( glossy ) message
@@ -223,6 +255,8 @@ function message_to_points(message, source, tags={}) {
         return handle_heroku_release(message, all_tags);
     } else if (message.message.indexOf("State changed from") !== -1) {
         return handle_heroku_state_changed(message, all_tags);
+    } else if (message.message.indexOf("Error ") === 0) {
+        return handle_heroku_errors(message, all_tags);
     }
     return [];
 }
@@ -253,7 +287,7 @@ exports.process_heroku_log = function process_heroku_log(body, source, tags={}) 
             }
             const message = buffer.substring(new_pos + 1, new_pos + len + 1).trim();
             messages.push(syslogParser.parse(message));
-            pos = new_pos + len;
+            pos = new_pos + len + 1;
             new_pos = body.indexOf(" ", pos);
         }
         log.debug(`messages=${JSON.stringify(messages, null, 4)}`);
