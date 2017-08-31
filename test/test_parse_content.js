@@ -102,5 +102,6 @@ describe('Heroku log parser', function() {
         assert.equal(syslog_drain.parse_sample_value("5.6KB"), 5734);
         assert.equal(syslog_drain.parse_sample_value("0.56"), 0.56);
         assert.equal(syslog_drain.parse_sample_value("200.5"), 200.5);
+        assert.equal(syslog_drain.parse_sample_value("86024364bytes"), 86024364);
     });
 });

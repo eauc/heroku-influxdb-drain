@@ -43,7 +43,7 @@ function parse_sample_value(value) {
         try {
             return filesizeParser(value);
         } catch (ex) {
-            return 0;
+            return parseFloat(value);
         }
     }
     return parseFloat(value);
