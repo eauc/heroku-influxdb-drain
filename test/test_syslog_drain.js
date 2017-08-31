@@ -134,4 +134,30 @@ describe('Syslog drain server', function () {
                 });
             })
     });
+
+    it ("should be able to parse heroku route", () => {
+        return pushMessage(`310 <158>1 2017-08-31T14:43:56.612173+00:00 host heroku router - at=info method=GET path="/api/profiles/f61aa57d-1913-4a10-bc1d-0759e9566de0/" host=api-staging.myotest.cloud request_id=b9337f92-c562-4a76-8d85-b530cda7d7c2 fwd="188.60.67.169" dyno=web.1 connect=0ms service=10ms status=401 bytes=315 protocol=https
+`)
+            .then(() => {
+                assert.equal(influx_points.length, 2);
+                const p0 = influx_points[0];
+                assert.equal(p0.measurement, "router_access_time");
+                assert.deepEqual(p0.tags,  {
+                    method: 'get',
+                    status: 401,
+                    path: '/api/profiles/f61aa57d-1913-4a10-bc1d-0759e9566de0/',
+                    ip: '188.60.67.169',
+                    app: 'heroku',
+                    source: 'test-source',
+                    process: 'router',
+                    pid: 'router'
+                });
+                assert.deepEqual(p0.timestamp, new Date("2017-08-31T14:43:56.612173+00:00"));
+                assert.deepEqual(p0.fields, {
+                    duration: 10,
+                    size: 315,
+                    count: 1
+                });
+            })
+    });
 });

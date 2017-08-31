@@ -18,12 +18,11 @@ exports.init = function init() {
 exports.send = function send(points) {
     const influxClient = new Influx.InfluxDB(INFLUX_URL);
     const influxPoints = points.map((p) => {
+        const fields = p.value !== undefined ? {value: p.value} : {};
         return {
             measurement: p.name,
             tags: p.tags,
-            fields: Object.assign({
-                value: p.value
-            }, p.fields || {}),
+            fields: Object.assign(fields, p.fields || {}),
             timestamp: p.timestamp
         };
     });
