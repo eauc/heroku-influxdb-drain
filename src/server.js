@@ -78,6 +78,9 @@ module.exports.start_server = function start_server(port) {
                     labels: {
                         source: source
                     },
+                    tags: {
+                        source: source
+                    }
                     value: points.length,
                     fields: {
                         state: 1
