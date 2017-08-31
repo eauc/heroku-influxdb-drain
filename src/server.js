@@ -62,12 +62,17 @@ function process_points(app, points) {
 module.exports.start_server = function start_server(port) {
     const app = express();
 
-    app.use(auth_middleware);
+    //app.use(auth_middleware);
+
     app.use(bodyParser.text({
         defaultCharset: 'ascii',
         type: 'application/logplex-1'
     }));
     app.use(bodyParser.json());
+
+    app.get('/status/', (req, res) => {
+        res.status(200).send("ok");
+    });
 
     app.post('/logs/:source/', auth_middleware, (req, res) => {
         const source = req.params.source;

@@ -46,16 +46,15 @@ describe('Push log server', function () {
             });
     });
 
-    it('401 without authorization', () => {
+    it('404 on root /', () => {
         return request(server)
             .get('/')
-            .expect(401);
+            .expect(404);
     });
 
-    it('404 everything else', function testPath() {
+    it('200 on /status/', function testPath() {
         return request(server)
-            .get('/')
-            .auth(auth, '')
-            .expect(404);
+            .get('/status/')
+            .expect(200);
     });
 });
