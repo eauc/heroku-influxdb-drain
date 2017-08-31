@@ -80,7 +80,7 @@ module.exports.start_server = function start_server(port) {
                     },
                     tags: {
                         source: source
-                    }
+                    },
                     value: points.length,
                     fields: {
                         state: 1
