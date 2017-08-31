@@ -7,7 +7,6 @@ const syslog_drain = require("./syslog_drain");
 const log = require('loglevel');
 const basicAuth = require('basic-auth');
 const influx = require("./influx_adaptor");
-const prometheus = require("./prometheus_adaptor");
 
 
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
@@ -20,9 +19,6 @@ const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
  *    help: "metric help" (Optional)
  *    value: "metric value",
  *    timestamp: metric timestamp as Date ( optional, now if not set )
- *    labels: { (Optional key-value prometheus labels)
- *      "key": "value"
- *    },
  *    tags: { (Optional key-value influxdb tags)
  *      "key": "value"
  *    },
@@ -45,13 +41,11 @@ function auth_middleware(req, res, next) {
 
 
 function process_points(app, points) {
-    return Promise.resolve()
-        .then(() => {
-            return prometheus.send(points, app);
-        })
-        .then(() => {
-            return influx.send(points);
-        });
+    return influx.send(points);
+}
+
+function extract_tags(req) {
+    return req.query || {};
 }
 
 /**
@@ -61,8 +55,6 @@ function process_points(app, points) {
 
 module.exports.start_server = function start_server(port) {
     const app = express();
-
-    //app.use(auth_middleware);
 
     app.use(bodyParser.text({
         defaultCharset: 'ascii',
@@ -76,16 +68,16 @@ module.exports.start_server = function start_server(port) {
 
     app.post('/logs/:source/', auth_middleware, (req, res) => {
         const source = req.params.source;
-        syslog_drain.process_heroku_log(req.body, source)
+        const tags = extract_tags(req);
+        syslog_drain.process_heroku_log(req.body, source, tags)
             .then((points) => {
+                const all_tags = Object.assign({}, tags, {
+                    source: source,
+                    type: "syslog"
+                });
                 points.push({
                     name: "metrics_received",
-                    labels: {
-                        source: source
-                    },
-                    tags: {
-                        source: source
-                    },
+                    tags: all_tags,
                     value: points.length,
                     fields: {
                         state: 1
@@ -103,33 +95,6 @@ module.exports.start_server = function start_server(port) {
 
     });
 
-    app.post('/push-logs/:source/', auth_middleware, (req, res) => {
-        const source = req.params.source;
-        const points = req.body;
-        points.push({
-            name: "metrics_received",
-            labels: {
-                source: source
-            },
-            value: points.length
-        });
-        points.forEach((p) => {
-            const labels = p.labels || {};
-            if (!labels.source) {
-                labels.source = source;
-                p.labels = labels;
-            }
-        });
-        return process_points(app, points)
-            .then(() => {
-                res.status(204).end();
-            })
-            .catch(err => {
-                log.error(err, err.stack);
-                res.status(400).send(err.message);
-            })
-    });
-
     app.get('/_syslog_debug/:source/', auth_middleware, (req, res) => {
         const source = req.params.source;
         res.status(200)
@@ -143,17 +108,14 @@ module.exports.start_server = function start_server(port) {
             .send(syslog_drain.collector_index());
     });
 
-    prometheus.init(app);
     influx.init(app);
 
-    const server = app.listen(port, (err) => {
+    return app.listen(port, (err) => {
         if (!err) {
-            log.info(`Starting prometheus heroku logs aggregator on port ${port}`);
+            log.info(`Starting heroku logs drain to influxdb on port ${port}`);
         } else {
             log.error(`Error starting aggregator server! ${err}`);
             process.exit(-1);
         }
     });
-    server.registry = app.register;
-    return server;
 };

@@ -18,7 +18,7 @@ describe('Heroku log parser', function() {
                     acc[v.name] = v;
                     return acc;
                 }, {});
-                assert.deepEqual(table.memory_total.labels, {
+                assert.deepEqual(table.memory_total.tags, {
                     app: 'app',
                     process: "web",
                     pid: "web.3",
@@ -52,7 +52,7 @@ describe('Heroku log parser', function() {
         const message = `83 <40>1 2012-11-30T06:45:29+00:00 host app web.3 - State changed from starting to up`;
         return syslog_drain.process_heroku_log(message, "test-source")
             .then((points) => {
-                assert.deepEqual(points[0].labels, {
+                assert.deepEqual(points[0].tags, {
                     "app": "app",
                     "process": "web",
                     "pid": "web.3",
@@ -66,15 +66,15 @@ describe('Heroku log parser', function() {
         const message = `103 <45>1 2017-08-30T08:48:49.251515+00:00 host app api - Release v48 created by user david.saradini@me.com`;
         return syslog_drain.process_heroku_log(message, "test-source")
             .then((points) => {
-                assert.deepEqual(points[0].labels, {
+                assert.deepEqual(points[0].tags, {
                     "app": "app",
                     "pid": "api",
                     "process": "api",
                     "source": "test-source",
-                    "version": "v48",
                     "user": "david.saradini@me.com"
                 });
                 assert.deepEqual(points[0].value, 1);
+                assert.deepEqual(points[0].fields.version, "v48");
             })
     });
 

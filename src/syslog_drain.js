@@ -102,10 +102,10 @@ exports.parse_heroku_state_changed = parse_heroku_state_changed;
 /**
  * handle heroku log-runtime-metrics
  * @param message Heroku parsed message
- * @param labels label associated to the message
+ * @param tags tags associated to the message
  * @returns {Array.<*>}
  */
-function handle_heroku_runtime_metrics(message, labels) {
+function handle_heroku_runtime_metrics(message, tags) {
     return message.message
         .split(" ").map((item) => {
             if (item.indexOf("sample#") !== -1) {
@@ -114,8 +114,7 @@ function handle_heroku_runtime_metrics(message, labels) {
                 return {
                     timestamp: message.time,
                     name: metric_name,
-                    labels: labels,
-                    tags: labels,
+                    tags: tags,
                     value: parse_size_value(value)
                 }
             } else {
@@ -129,65 +128,48 @@ exports.handle_heroku_runtime_metrics = handle_heroku_runtime_metrics;
 /**
  * handle heroku logs router
  * @param message heroku router message
- * @param labels labels associated to the message
+ * @param tags tags associated to the message
  * @returns {Array.<*>}
  */
-function handle_heroku_router(message, labels) {
+function handle_heroku_router(message, tags) {
     const key_values = message.message
         .split(" ").reduce((acc, item) => {
             const [key, value] = item.split("=");
             acc[key] = value;
             return acc;
         }, {});
-    const all_labels = Object.assign({
+    const all_tags = Object.assign({
         method: key_values["method"].toLowerCase(),
         status: parseInt(key_values["status"]),
         path: key_values["path"].replace(/"/g, ""),
         ip: key_values["fwd"].replace(/"/g, "")
-    }, labels);
-    return [
-        {
-            timestamp: message.time,
-            name: "router_access_time",
-            labels: all_labels,
-            tags: all_labels,
-            value: parse_duration_value(key_values["service"])
-        }, {
-            timestamp: message.time,
-            name: "router_access_bytes",
-            labels: all_labels,
-            tags: all_labels,
-            value: parse_size_value(key_values["bytes"])
-        }, {
-            timestamp: message.time,
-            name: "router_access_count",
-            labels: all_labels,
-            tags: all_labels,
-            value: 1,
-            fields: {
-                method: key_values["method"].toLowerCase(),
-                status: parseInt(key_values["status"])
-            }
+    }, tags);
+    return [{
+        timestamp: message.time,
+        name: "router_access_time",
+        tags: all_tags,
+        fields: {
+            duration: parse_duration_value(key_values["service"]),
+            size: parse_size_value(key_values["bytes"]),
+            count: 1
         }
-    ];
+    }];
 }
 
 
-function handle_heroku_release(message, labels) {
+function handle_heroku_release(message, tags) {
     const result = parse_heroku_release(message.message);
     if (!result) {
         return [];
     }
-    const all_labels = Object.assign({
-        user: result[1],
-        version: result[0]
-    }, labels);
+    const all_tags = Object.assign({
+        user: result[1]
+    }, tags);
     return [
         {
             timestamp: message.time,
             name: "heroku_release",
-            labels: all_labels,
-            tags: labels,
+            tags: all_tags,
             value: 1,
             fields: {
                 version: result[0]
@@ -197,7 +179,7 @@ function handle_heroku_release(message, labels) {
 }
 
 
-function handle_heroku_state_changed(message, labels) {
+function handle_heroku_state_changed(message, tags) {
     const result = parse_heroku_state_changed(message.message);
     if (!result) {
         return [];
@@ -206,12 +188,11 @@ function handle_heroku_state_changed(message, labels) {
         {
             timestamp: message.time,
             name: "heroku_state",
-            labels: labels,
-            tags: labels,
+            tags: tags,
             value: DYNO_STATES[result[1]] || -10,
             fields: {
-                old_state: result[1],
-                new_state: result[0],
+                old_state: result[0],
+                new_state: result[1],
             }
         }
     ]
@@ -221,26 +202,27 @@ function handle_heroku_state_changed(message, labels) {
  * Convert a syslog message to a influxDB point
  * @param message syslog ( glossy ) message
  * @param source string source of the log ( drain )
+ * @param tags Object tags
  * @returns Array of influx IPoint
  */
-function message_to_points(message, source) {
-    const labels = {
+function message_to_points(message, source, tags={}) {
+    const all_tags = Object.assign({}, tags, {
         app: message.appName,
         source: source
-    };
+    });
     if (message.pid) {
-        labels["process"] = message.pid.split(".")[0];
-        labels["pid"] = message.pid;
+        all_tags["process"] = message.pid.split(".")[0];
+        all_tags["pid"] = message.pid;
     }
 
     if (message.message.indexOf("sample#") !== -1) {
-        return handle_heroku_runtime_metrics(message, labels);
+        return handle_heroku_runtime_metrics(message, all_tags);
     } else if (message.message.indexOf("protocol=https") !== -1) {
-        return handle_heroku_router(message, labels);
+        return handle_heroku_router(message, all_tags);
     } else if (message.message.indexOf("created by user") !== -1) {
-        return handle_heroku_release(message, labels);
+        return handle_heroku_release(message, all_tags);
     } else if (message.message.indexOf("State changed from") !== -1) {
-        return handle_heroku_state_changed(message, labels);
+        return handle_heroku_state_changed(message, all_tags);
     }
     return [];
 }
@@ -250,9 +232,10 @@ function message_to_points(message, source) {
  * Process heroku log from a request body as text
  * @param body : String, message body
  * @param source : String, source of the message
+ * @param tags : Object key values tags
  * @returns {Promise}
  */
-exports.process_heroku_log = function process_heroku_log(body, source) {
+exports.process_heroku_log = function process_heroku_log(body, source, tags={}) {
     collect_messages(source, body);
     return new Promise((resolve) => {
         const buffer = body;
@@ -275,7 +258,7 @@ exports.process_heroku_log = function process_heroku_log(body, source) {
         }
         log.debug(`messages=${JSON.stringify(messages, null, 4)}`);
         const points = messages
-            .map((m) => message_to_points(m, source))
+            .map((m) => message_to_points(m, source, tags))
             .filter((p) => p.length > 0)
             .reduce((a, b) => a.concat(b), []);
         resolve(points);

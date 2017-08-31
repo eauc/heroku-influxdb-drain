@@ -18,7 +18,7 @@ Change log level, set to 'info' for default.
 (optional) if set this will check for a basic auth username name ACCESS_TOKEN
 
 
-i.e. https://ACCESS_TOKEN@my-server/logs/:source/
+i.e. https://ACCESS_TOKEN@my-server/logs/:source/:env
 
 
 ### ```SYSLOG_DEBUG```
@@ -33,8 +33,9 @@ i.e. https://ACCESS_TOKEN@my-server/logs/:source/
 
 ### Enable heroku https log drains
 
-    $ heroku drains:add https://ACCESS_TOKEN@mylogdrain.herokuapp.com/logs/:source/ --app APP_NAME
+    $ heroku drains:add https://ACCESS_TOKEN@mylogdrain.herokuapp.com/logs/:source/?env=production --app APP_NAME
 
+source is mandatory other parameter are used as tags or labels
 
 ### Enable heroku runtime metrics
 
