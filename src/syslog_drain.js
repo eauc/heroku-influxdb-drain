@@ -37,17 +37,19 @@ function collect_messages(source, body) {
  * @param value the string value
  * @returns {*}
  */
-function parse_size_value(value) {
-    try {
-        return filesizeParser(value);
-    } catch (ex) {
+function parse_sample_value(value) {
+    const is_numeric = /^[\d.]+$/.test(value);
+    if (!is_numeric) {
         try {
-            return parseFloat(value);
+            return filesizeParser(value);
         } catch (ex) {
-            return value;
+            return 0;
         }
     }
+    return parseFloat(value);
 }
+exports.parse_sample_value = parse_sample_value;
+
 
 /**
  * Parse log value from human readable size form i.e. 25.6MB
@@ -129,7 +131,7 @@ function handle_heroku_runtime_metrics(message, tags) {
                     timestamp: message.time,
                     name: metric_name,
                     tags: tags,
-                    value: parse_size_value(value)
+                    value: parse_sample_value(value)
                 }
             } else {
                 return null;
@@ -165,7 +167,7 @@ function handle_heroku_router(message, tags) {
         tags: all_tags,
         fields: {
             duration: parse_duration_value(key_values["service"]),
-            size: parse_size_value(key_values["bytes"]),
+            size: parse_sample_value(key_values["bytes"]),
             count: 1
         }
     }];

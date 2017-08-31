@@ -30,4 +30,5 @@ describe('Push log server', function () {
             .get('/status/')
             .expect(200);
     });
+
 });

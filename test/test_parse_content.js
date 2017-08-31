@@ -97,4 +97,10 @@ describe('Heroku log parser', function() {
         assert.equal(oldState, "starting");
         assert.equal(newState,  "up");
     });
+
+    it("should be able to parse various sample types", () => {
+        assert.equal(syslog_drain.parse_sample_value("5.6KB"), 5734);
+        assert.equal(syslog_drain.parse_sample_value("0.56"), 0.56);
+        assert.equal(syslog_drain.parse_sample_value("200.5"), 200.5);
+    });
 });
