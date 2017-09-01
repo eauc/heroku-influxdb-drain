@@ -224,9 +224,12 @@ function handle_heroku_errors(message, tags) {
         {
             timestamp: message.time,
             name: "heroku_error",
-            tags: tags,
-            fields: {
+            tags: Object.assign({
                 error: result
+            }, tags),
+            fields: {
+                count: 1,
+                error: error
             }
         }
     ]
