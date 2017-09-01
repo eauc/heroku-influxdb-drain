@@ -23,8 +23,18 @@ function write(influxPoints) {
 
 exports.init = function init(router) {
     log.info(`Use influxdb adapter at url: ${INFLUX_URL}`);
-    router.post('/write', (req, res) => {
-        write(req.body)
+    router.post('/write/:source', (req, res) => {
+        const points = (req.body || []).map((p) => {
+            return {
+                measurement: p.measurement,
+                fields: p.fields,
+                tags: Object.assign({
+                    'source': req.params.source
+                }, req.query || {}, p.tags || {}),
+                timestamp: p.timestamp
+            }
+        });
+        write(points)
             .then(() => {
                 res.status(204).end();
             })

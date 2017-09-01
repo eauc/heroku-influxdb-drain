@@ -41,7 +41,7 @@ describe('Push log server', function () {
     describe('influxdb', () => {
         it('401 on POST /influx/write without authorization', function testPath() {
             return request(server)
-                .post('/influx/write')
+                .post('/influx/write/test-source?env=production')
                 .set('Content-Type', 'application/json')
                 .send([{}])
                 .expect(401);
@@ -49,7 +49,7 @@ describe('Push log server', function () {
 
         it('204 on POST /influx/write with authorization', function testPath() {
             return request(server)
-                .post('/influx/write')
+                .post('/influx/write/test-source?env=production')
                 .set('Content-Type', 'application/json')
                 .auth(auth, '')
                 .send([{
@@ -68,7 +68,9 @@ describe('Push log server', function () {
                     const p0 = influx_points[0];
                     assert.equal(p0.measurement, "response_times");
                     assert.deepEqual(p0.tags, {
-                        'host': "localhost"
+                        'host': "localhost",
+                        source: "test-source",
+                        env: "production"
                     });
                     assert.deepEqual(p0.fields, {
                         path: "/test",
