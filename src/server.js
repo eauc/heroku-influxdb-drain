@@ -108,7 +108,10 @@ module.exports.start_server = function start_server(port) {
             .send(syslog_drain.collector_index());
     });
 
-    influx.init(app);
+    const influxRouter = express.Router();
+    influxRouter.use(auth_middleware);
+    influx.init(influxRouter);
+    app.use('/influx', influxRouter);
 
     return app.listen(port, (err) => {
         if (!err) {

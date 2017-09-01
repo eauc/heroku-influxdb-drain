@@ -3,16 +3,23 @@
 const request = require('supertest');
 const assert = require("assert");
 const log = require('loglevel');
+const influx = require("../src/influx_adaptor");
 
 log.setLevel("silent");
 
+const auth = process.env.ACCESS_TOKEN = "fake-one";
 
 
 describe('Push log server', function () {
     let server;
+    let influx_points;
 
     beforeEach(function () {
         server = require('../src/server').start_server(3124);
+        influx_points = null;
+        influx._set_debug_writer((p) => {
+            influx_points = p;
+        });
     });
 
     afterEach(function () {
@@ -31,4 +38,43 @@ describe('Push log server', function () {
             .expect(200);
     });
 
+    describe('influxdb', () => {
+        it('401 on POST /influx/write without authorization', function testPath() {
+            return request(server)
+                .post('/influx/write')
+                .set('Content-Type', 'application/json')
+                .send([{}])
+                .expect(401);
+        });
+
+        it('204 on POST /influx/write with authorization', function testPath() {
+            return request(server)
+                .post('/influx/write')
+                .set('Content-Type', 'application/json')
+                .auth(auth, '')
+                .send([{
+                    measurement: 'response_times',
+                    fields: {
+                        path: "/test",
+                        duration: 1778
+                    },
+                    tags: {
+                        'host': "localhost"
+                    }
+                }])
+                .expect(204)
+                .then(() => {
+                    assert.equal(influx_points.length, 1);
+                    const p0 = influx_points[0];
+                    assert.equal(p0.measurement, "response_times");
+                    assert.deepEqual(p0.tags, {
+                        'host': "localhost"
+                    });
+                    assert.deepEqual(p0.fields, {
+                        path: "/test",
+                        duration: 1778
+                    });
+                });
+        });
+    })
 });
