@@ -1,10 +1,15 @@
-# Heroku log draining prometheus exporter
+# Heroku log draining to influxdb
 
 ## Environment variable configuration
 
 ### ```PORT```
 
 port on what the server is listening to receive heroku log drain
+
+
+### ```INFLUX_URL```
+
+Url of your influxdb instance (default http://localhost:8086/heroku)
 
 
 ### ```LOG_LEVEL```
@@ -51,7 +56,3 @@ Start your server
 Send fake data
 
      curl -X POST -H "Content-Type: application/logplex-1" --data @./samples/sample0.txt  http://jojo@localhost:3030/logs/test/ -v
-
-Get back data
-
-    curl http://jojo@localhost:3030/metrics/

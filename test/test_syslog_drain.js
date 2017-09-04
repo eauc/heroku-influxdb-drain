@@ -43,7 +43,7 @@ describe('Syslog drain server', function () {
     }
 
     it('should be able to post logs via /logs/SOURCE/', () => {
-        const message = `79 <2>1 2012-11-30T06:45:29+00:00 host app - - sample#service.dataset_count=19071`;
+        const message = `91 <2>1 2012-11-30T06:45:29+00:00 host app - - tag#x=hello sample#service.dataset_count=19071`;
         return request(server)
             .post('/logs/test-source/?env=testing')
             .auth(auth, '')
@@ -57,6 +57,7 @@ describe('Syslog drain server', function () {
                 assert.deepEqual(p0.tags, {
                     env: 'testing',
                     app: 'app',
+                    x: 'hello',
                     source: 'test-source'
                 });
                 assert.deepEqual(p0.fields, {
@@ -172,11 +173,26 @@ describe('Syslog drain server', function () {
                     app: 'heroku',
                     source: 'test-source',
                     process: 'logplex',
+                    error: 'L10',
                     pid: 'logplex'
                 });
                 assert.deepEqual(p0.timestamp, new Date("2017-08-31T14:47:14.000Z"));
                 assert.deepEqual(p0.fields, {
+                    count: 1,
                     error: 'L10'
+                });
+
+                const p1 = influx_points[1];
+                assert.equal(p1.measurement, "load_avg_1m");
+                assert.deepEqual(p1.tags,   {
+                    app: 'heroku',
+                    source: 'test-source',
+                    process: 'web',
+                    pid: 'web.1'
+                });
+                assert.deepEqual(p1.timestamp, new Date("2017-08-31T14:47:13.830Z"));
+                assert.deepEqual(p1.fields, {
+                    value: 0.00
                 });
             });
     });

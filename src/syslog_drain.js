@@ -122,17 +122,23 @@ function parse_heroku_errors(value) {
  * @returns {Array.<*>}
  */
 function handle_heroku_runtime_metrics(message, tags) {
+    const local_tags = Object.assign({}, tags);
     return message.message
         .split(" ").map((item) => {
             if (item.indexOf("sample#") !== -1) {
                 const [key, value] = item.substring(7).split("=");
-                const metric_name = key.replace(/[\W_]+/g,"_");
+                const metric_name = key.replace(/[\W_]+/g, "_");
                 return {
                     timestamp: message.time,
                     name: metric_name,
-                    tags: tags,
+                    tags: local_tags,
                     value: parse_sample_value(value)
                 }
+            } else if (item.indexOf("tag#") !== -1) {
+                // add tag to all samples
+                const [key, value] = item.substring(4).split("=");
+                local_tags[key] = value;
+                return null;
             } else {
                 return null;
             }
@@ -229,7 +235,7 @@ function handle_heroku_errors(message, tags) {
             }, tags),
             fields: {
                 count: 1,
-                error: error
+                error: result
             }
         }
     ]
@@ -251,19 +257,25 @@ function message_to_points(message, source, tags={}) {
         all_tags["process"] = message.pid.split(".")[0];
         all_tags["pid"] = message.pid;
     }
-
+    let result = [];
     if (message.message.indexOf("sample#") !== -1) {
-        return handle_heroku_runtime_metrics(message, all_tags);
+        result = handle_heroku_runtime_metrics(message, all_tags);
     } else if (message.message.indexOf("protocol=https") !== -1) {
-        return handle_heroku_router(message, all_tags);
+        result = handle_heroku_router(message, all_tags);
     } else if (message.message.indexOf("created by user") !== -1) {
-        return handle_heroku_release(message, all_tags);
+        result = handle_heroku_release(message, all_tags);
     } else if (message.message.indexOf("State changed from") !== -1) {
-        return handle_heroku_state_changed(message, all_tags);
+        result = handle_heroku_state_changed(message, all_tags);
     } else if (message.message.indexOf("Error ") === 0) {
-        return handle_heroku_errors(message, all_tags);
+        result = handle_heroku_errors(message, all_tags);
     }
-    return [];
+    // ensure "source" was not changed, by re-setting it.
+    result.forEach((p) => {
+        if (p.tags) {
+            p.tags.source = source;
+        }
+    });
+    return result;
 }
 
 
