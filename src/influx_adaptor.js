@@ -20,6 +20,8 @@ function write(influxPoints) {
         return influxClient.writePoints(influxPoints);
     }
 }
+exports.write = write;
+
 
 exports.init = function init(router) {
     log.info(`Use influxdb adapter at url: ${INFLUX_URL}`);

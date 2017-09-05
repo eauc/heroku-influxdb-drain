@@ -7,6 +7,7 @@ const syslog_drain = require("./syslog_drain");
 const log = require('loglevel');
 const basicAuth = require('basic-auth');
 const influx = require("./influx_adaptor");
+const statusgator = require("./statusgator_adaptor");
 
 
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
@@ -112,6 +113,10 @@ module.exports.start_server = function start_server(port) {
     influxRouter.use(auth_middleware);
     influx.init(influxRouter);
     app.use('/influx', influxRouter);
+
+    const statusgatorRouter = express.Router();
+    statusgator.init(statusgatorRouter);
+    app.use('/statusgator', statusgatorRouter);
 
     return app.listen(port, (err) => {
         if (!err) {
