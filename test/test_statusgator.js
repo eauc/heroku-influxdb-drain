@@ -29,7 +29,7 @@ describe('Statusgator webhook', function () {
     it('200 on POST /statusgator', function testPath() {
         return request(server)
             .post('/statusgator/')
-            .set('Content-Type', 'application/json')
+            .set('Content-Type', 'application/x-www-form-urlencoded')
             .send({
                 "service_name": "Papertrail",
                 "favicon_url": "https://dwxjd9cd6rwno.cloudfront.net/favicons/papertrail.ico",

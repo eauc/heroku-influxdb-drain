@@ -115,6 +115,7 @@ module.exports.start_server = function start_server(port) {
     app.use('/influx', influxRouter);
 
     const statusgatorRouter = express.Router();
+    statusgatorRouter.use(bodyParser.urlencoded({ extended: false }));
     statusgator.init(statusgatorRouter);
     app.use('/statusgator', statusgatorRouter);
 
