@@ -18,7 +18,8 @@
     "glossy": "0.1.7",
     "influx": "^5.0.7",
     "loglevel": "1.4.1",
-    "parse-duration": "0.1.1"
+    "parse-duration": "0.1.1",
+    "superagent": "^3.6.0"
   },
   "devDependencies": {
     "eslint": "^4.5.0",

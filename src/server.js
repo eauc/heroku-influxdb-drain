@@ -8,9 +8,11 @@ const log = require('loglevel');
 const basicAuth = require('basic-auth');
 const influx = require("./influx_adaptor");
 const statusgator = require("./statusgator_adaptor");
+const monitor = require("./monitor_adaptor");
 
 
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+const ENABLE_MONITOR = process.env.ENABLE_MONITOR;
 
 
 /*
@@ -118,6 +120,12 @@ module.exports.start_server = function start_server(port) {
     statusgatorRouter.use(bodyParser.urlencoded({ extended: false }));
     statusgator.init(statusgatorRouter);
     app.use('/statusgator', statusgatorRouter);
+
+    if (ENABLE_MONITOR) {
+        const monitorRouter = express.Router();
+        monitor.init(monitorRouter);
+        app.use('/monitor', monitorRouter);
+    }
 
     return app.listen(port, (err) => {
         if (!err) {
