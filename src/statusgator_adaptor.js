@@ -21,6 +21,7 @@ function status_to_int(status) {
 exports.init = function init(router) {
     log.info(`StatusGathor webhook mounted`);
     router.post('/', (req, res) => {
+        // meanwhile to verify content
         log.info("StatusGathor request", req);
         const content = req.body || {};
         const status = status_to_int(content.current_status);
