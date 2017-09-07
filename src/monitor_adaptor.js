@@ -3,19 +3,19 @@ const express = require('express');
 const influx = require("./influx_adaptor");
 
 
-const MONITOR_INTERVAL = parseInt(process.env.MONITOR_INTERVAL || "10000");
+const MONITOR_INTERVAL = parseInt(process.env.MONITOR_INTERVAL || "60000");
+const MONITORS = process.env.MONITORS ? process.env.MONITORS.split(",").map((s) => s.trim()) : [];
 
-
-const MONITOR_CLASSES = [
-    require("./monitor/github"),
-    require("./monitor/heroku"),
-    require("./monitor/travis_ci")
-];
 
 
 exports.init = function init(router) {
-    log.info(`Service monitor started`);
-    setInterval(() => monitor(MONITOR_CLASSES), MONITOR_INTERVAL);
+    if (MONITORS.length > 0) {
+        log.info(`Service monitor started for service [${MONITORS.join("|")}] with interval: ${MONITOR_INTERVAL} ms`);
+        const monitor_classes = MONITORS.map((m) => {
+            return require(`./monitor/${m}`)
+        });
+        setInterval(() => monitor(monitor_classes), MONITOR_INTERVAL);
+    }
 };
 
 function monitor(class_list) {
