@@ -16,6 +16,10 @@ class GithubMonitor extends monitor.Monitor {
         super('GitHub');
     }
 
+    is_enabled() {
+        return true;
+    }
+
     check() {
         return this.get_json_resource(GITHUB_URL)
             .then((res) => {
@@ -23,7 +27,7 @@ class GithubMonitor extends monitor.Monitor {
                 return GitHubStatusMap[res.body['status']];
             })
             .catch((err) => {
-                log.debug("Github status", err);
+                log.debug("Github error", err);
                 return monitor.STATUS_UNKNOWN;
             })
     }

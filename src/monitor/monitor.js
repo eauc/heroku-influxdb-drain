@@ -16,11 +16,21 @@ class Monitor {
         return STATUS_UNKNOWN;
     }
 
+    update_api_call(req) {
+        return req;
+    }
+
+    is_enabled() {
+        // disabled by default, subclasses should return true to start monitoring.
+        return false;
+    }
+
     get_json_resource(url) {
         return new Promise((resolve, reject) => {
-            request
-                .get(url)
-                .set('Accept', 'application/json')
+            this.update_api_call(
+                request
+                    .get(url)
+                    .set('Accept', 'application/json'))
                 .end(function(err, res){
                     if (err) {
                         reject(err);

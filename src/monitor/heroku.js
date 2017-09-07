@@ -17,6 +17,10 @@ class HerokuMonitor extends monitor.Monitor {
         super('Heroku');
     }
 
+    is_enabled() {
+        return true;
+    }
+
     check() {
         return this.get_json_resource(HEROKU_URL)
             .then((res) => {
@@ -25,7 +29,7 @@ class HerokuMonitor extends monitor.Monitor {
                 return HerokuStatusMap[status];
             })
             .catch((err) => {
-                log.debug("Heroku status", err);
+                log.debug("Heroku error", err);
                 return monitor.STATUS_UNKNOWN;
             })
     }
