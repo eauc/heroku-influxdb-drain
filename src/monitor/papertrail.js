@@ -4,7 +4,7 @@ const monitor = require("./monitor");
 class TravisCIMonitor extends monitor.StatusPageMonitor {
 
     constructor() {
-        super('TravisCI');
+        super('Papertrail');
     }
 
     is_enabled() {
@@ -12,7 +12,7 @@ class TravisCIMonitor extends monitor.StatusPageMonitor {
     }
 
     get_service_url() {
-        return "https://www.traviscistatus.com/";
+        return "http://www.papertrailstatus.com/";
     }
 }
 
