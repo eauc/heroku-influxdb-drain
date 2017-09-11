@@ -1,6 +1,7 @@
 const Influx = require('influx');
 const log = require("loglevel");
 const express = require('express');
+const _ = require("lodash");
 
 
 const INFLUX_URL = process.env.INFLUX_URL || "http://localhost:8086/heroku";
@@ -27,14 +28,22 @@ exports.init = function init(router) {
     log.info(`Use influxdb adapter at url: ${INFLUX_URL}`);
     router.post('/write/:source', (req, res) => {
         const points = (req.body || []).map((p) => {
-            return {
+            const new_point = {
                 measurement: p.measurement,
                 fields: p.fields,
                 tags: Object.assign({
                     'source': req.params.source
                 }, req.query || {}, p.tags || {}),
-                timestamp: p.timestamp
+            };
+            // sanitize tags and fields, disallow empty string
+            new_point.tags = _.pickBy(new_point.tags, (v, k) => {
+                return v !== "" && v !== null;
+            });
+            if (p.timestamp) {
+                // ensure we don't put timestamp if null or undefined or 0
+                new_point.timestamp = new Date(p.timestamp)
             }
+            return new_point;
         });
         write(points)
             .then(() => {

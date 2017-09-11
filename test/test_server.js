@@ -78,5 +78,38 @@ describe('Push log server', function () {
                     });
                 });
         });
+
+        it('should filter empty tags', function testPath() {
+            return request(server)
+                .post('/influx/write/test-source?env=production')
+                .set('Content-Type', 'application/json')
+                .auth(auth, '')
+                .send([{
+                    measurement: 'response_times',
+                    fields: {
+                        path: "/test",
+                        duration: 1778
+                    },
+                    tags: {
+                        'wrong': "",
+                        'host': "localhost"
+                    }
+                }])
+                .expect(204)
+                .then(() => {
+                    assert.equal(influx_points.length, 1);
+                    const p0 = influx_points[0];
+                    assert.equal(p0.measurement, "response_times");
+                    assert.deepEqual(p0.tags, {
+                        'host': "localhost",
+                        source: "test-source",
+                        env: "production"
+                    });
+                    assert.deepEqual(p0.fields, {
+                        path: "/test",
+                        duration: 1778
+                    });
+                });
+        });
     })
 });

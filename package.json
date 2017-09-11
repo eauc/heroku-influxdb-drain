@@ -11,20 +11,21 @@
   "author": "David Saradini",
   "license": "MIT",
   "dependencies": {
-    "basic-auth": "^1.1.0",
+    "basic-auth": "1.1.0",
     "body-parser": "1.17.2",
     "express": "4.15.4",
     "filesize-parser": "1.4.1",
     "glossy": "0.1.7",
-    "influx": "^5.0.7",
+    "influx": "5.0.7",
+    "lodash": "4.17.4",
     "loglevel": "1.4.1",
     "parse-duration": "0.1.1",
-    "superagent": "^3.6.0"
+    "superagent": "3.6.0"
   },
   "devDependencies": {
-    "eslint": "^4.5.0",
+    "eslint": "4.5.0",
     "jshint": "2.9.5",
-    "mocha": "^3.5.0",
-    "supertest": "^3.0.0"
+    "mocha": "3.5.0",
+    "supertest": "3.0.0"
   }
 }
