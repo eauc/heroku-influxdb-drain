@@ -107,12 +107,12 @@ exports.parse_heroku_state_changed = parse_heroku_state_changed;
  * @returns error code
  */
 function parse_heroku_errors(value) {
-    var releaseRegexp = new RegExp(`^Error (L|R)([0-9]{2,})`);
-    var match = releaseRegexp.exec(value);
+    var errorRegexp = new RegExp(`^Error (L|R)([0-9]{2,})`);
+    var match = errorRegexp.exec(value);
 
     if (!match) {
-        releaseRegexp = new RegExp(`^at=error code=(H)([0-9]{2,})`);
-        match = releaseRegexp.exec(value);
+        errorRegexp = new RegExp(`^at=error code=(H)([0-9]{2,})`);
+        match = errorRegexp.exec(value);
     }
 
     if (!match) {
