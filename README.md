@@ -26,7 +26,7 @@ Change log level, set to 'info' for default.
 i.e. https://ACCESS_TOKEN@my-server/logs/:source/:env
 
 
-### ```SYSLOG_DEBUG```
+### ```DEBUG_SYSLOG```
 
 
 (optional) set to "true" to be able to debug received syslog messages, inspect result with
