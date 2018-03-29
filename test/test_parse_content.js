@@ -71,10 +71,10 @@ describe('Heroku log parser', function() {
                     "pid": "api",
                     "process": "api",
                     "source": "test-source",
-                    "user": "david.saradini@me.com"
+                    "user": "david.saradini@me.com",
+                    "version": "v48"
                 });
                 assert.deepEqual(points[0].value, 1);
-                assert.deepEqual(points[0].fields.version, "v48");
             })
     });
 
