@@ -107,12 +107,18 @@ exports.parse_heroku_state_changed = parse_heroku_state_changed;
  * @returns error code
  */
 function parse_heroku_errors(value) {
-    const releaseRegexp = new RegExp(`^Error ([a-zA-Z0-9_]+) (.*)`);
-    const match = releaseRegexp.exec(value);
+    var releaseRegexp = new RegExp(`^Error (L|R)([0-9]{2,})`);
+    var match = releaseRegexp.exec(value);
+
+    if (!match) {
+        releaseRegexp = new RegExp(`^at=error code=(H)([0-9]{2,})`);
+        match = releaseRegexp.exec(value);
+    }
+
     if (!match) {
         return null;
     }
-    return match[1];
+    return match[1]+match[2];
 }
 
 /**
@@ -266,7 +272,7 @@ function message_to_points(message, source, tags={}) {
         result = handle_heroku_release(message, all_tags);
     } else if (message.message.indexOf("State changed from") !== -1) {
         result = handle_heroku_state_changed(message, all_tags);
-    } else if (message.message.indexOf("Error ") === 0) {
+    } else if ((message.message.indexOf("Error ") === 0) || (message.message.indexOf("at=error code=")) === 0) {
         result = handle_heroku_errors(message, all_tags);
     }
     // ensure "source" was not changed, by re-setting it.

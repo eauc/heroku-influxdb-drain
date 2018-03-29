@@ -161,7 +161,7 @@ describe('Syslog drain server', function () {
                 });
             })
     });
-    it("should generate errors from heroku", () => {
+    it("should generate errors from heroku dyno", () => {
         const message = `142 <172>1 2017-08-31T14:47:14+00:00 host heroku logplex - Error L10 (output buffer overflow): 2 messages dropped since 2017-08-31T14:44:12+00:00.203 <45>1 2017-08-31T14:47:13.830178+00:00 host heroku web.1 - source=web.1 dyno=heroku.55681600.b0bc8784-5574-4f35-9508-5ea02d47d251 sample#load_avg_1m=0.00 sample#load_avg_5m=0.00 sample#load_avg_15m=0.00
 334 <45>1 2017-08-31T14:47:13.830269+00:00 host heroku web.1 - source=web.1 dyno=heroku.55681600.b0bc8784-5574-4f35-9508-5ea02d47d251 sample#memory_total=201.71MB sample#memory_rss=190.07MB sample#memory_cache=0.33MB sample#memory_swap=11.30MB sample#memory_pgpgin=88604pages sample#memory_pgpgout=53146pages sample#memory_quota=512.00MB`;
         return pushMessage(message)
@@ -193,6 +193,27 @@ describe('Syslog drain server', function () {
                 assert.deepEqual(p1.timestamp, new Date("2017-08-31T14:47:13.830Z"));
                 assert.deepEqual(p1.fields, {
                     value: 0.00
+                });
+            });
+    });
+    it("should generate errors from heroku router", () => {
+        const message = `263 <158>1 2018-03-29T14:18:26.133358+00:00 host heroku router - at=error code=H10 desc="App crashed" method=GET path="/" host=scrooge.niteo.co request_id=7a2a1014-6826-4d46-86b0-db4668cbf8c0 fwd="77.208.20.53" dyno= connect= service= status=503 bytes= protocol=http`;
+        return pushMessage(message)
+            .then(() => {
+                assert.equal(influx_points.length, 2);
+                const p0 = influx_points[0];
+                assert.equal(p0.measurement, "heroku_error");
+                assert.deepEqual(p0.tags,   {
+                    app: 'heroku',
+                    source: 'test-source',
+                    process: 'router',
+                    error: 'H10',
+                    pid: 'router'
+                });
+                assert.deepEqual(p0.timestamp, new Date("2018-03-29T14:18:26.133Z"));
+                assert.deepEqual(p0.fields, {
+                    count: 1,
+                    error: 'H10'
                 });
             });
     });
