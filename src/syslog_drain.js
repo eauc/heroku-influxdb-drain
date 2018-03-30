@@ -240,8 +240,7 @@ function handle_heroku_errors(message, tags) {
                 error: result
             }, tags),
             fields: {
-                count: 1,
-                error: result
+                count: 1
             }
         }
     ]
