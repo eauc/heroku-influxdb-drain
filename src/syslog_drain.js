@@ -192,6 +192,7 @@ function handle_heroku_release(message, tags) {
         return [];
     }
     const all_tags = Object.assign({
+        version: result[0],
         user: result[1]
     }, tags);
     return [
@@ -199,10 +200,7 @@ function handle_heroku_release(message, tags) {
             timestamp: message.time,
             name: "heroku_release",
             tags: all_tags,
-            value: 1,
-            fields: {
-                version: result[0]
-            }
+            value: 1
         }
     ]
 }

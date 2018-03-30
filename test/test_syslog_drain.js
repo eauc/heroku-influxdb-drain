@@ -161,6 +161,7 @@ describe('Syslog drain server', function () {
                 });
             })
     });
+
     it("should generate errors from heroku dyno", () => {
         const message = `142 <172>1 2017-08-31T14:47:14+00:00 host heroku logplex - Error L10 (output buffer overflow): 2 messages dropped since 2017-08-31T14:44:12+00:00.203 <45>1 2017-08-31T14:47:13.830178+00:00 host heroku web.1 - source=web.1 dyno=heroku.55681600.b0bc8784-5574-4f35-9508-5ea02d47d251 sample#load_avg_1m=0.00 sample#load_avg_5m=0.00 sample#load_avg_15m=0.00
 334 <45>1 2017-08-31T14:47:13.830269+00:00 host heroku web.1 - source=web.1 dyno=heroku.55681600.b0bc8784-5574-4f35-9508-5ea02d47d251 sample#memory_total=201.71MB sample#memory_rss=190.07MB sample#memory_cache=0.33MB sample#memory_swap=11.30MB sample#memory_pgpgin=88604pages sample#memory_pgpgout=53146pages sample#memory_quota=512.00MB`;
