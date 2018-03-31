@@ -1,0 +1,1 @@
+157 <190>1 2018-03-31T17:21:12.250715+00:00 host app web.1 - INFO [init] level='info' event='Static Folder Registered' logger='init' folder='woocart_com/static'

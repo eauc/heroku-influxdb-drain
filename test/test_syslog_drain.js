@@ -196,6 +196,7 @@ describe('Syslog drain server', function () {
                 });
             });
     });
+
     it("should generate errors from heroku router", () => {
         const message = `263 <158>1 2018-03-29T14:18:26.133358+00:00 host heroku router - at=error code=H10 desc="App crashed" method=GET path="/" host=scrooge.niteo.co request_id=7a2a1014-6826-4d46-86b0-db4668cbf8c0 fwd="77.208.20.53" dyno= connect= service= status=503 bytes= protocol=http`;
         return pushMessage(message)
@@ -211,6 +212,29 @@ describe('Syslog drain server', function () {
                     pid: 'router'
                 });
                 assert.deepEqual(p0.timestamp, new Date("2018-03-29T14:18:26.133Z"));
+                assert.deepEqual(p0.fields, {
+                    value: 1
+                });
+            });
+    });
+
+    it("should be able to parse structlog entries", () => {
+        const message = `157 <190>1 2018-03-31T17:21:12.250715+00:00 host app web.1 - level='info' event='Static Folder Registered' logger='init' folder='woocart_com/static'`;
+        return pushMessage(message)
+            .then(() => {
+                assert.equal(influx_points.length, 2);
+                const p0 = influx_points[0];
+                assert.equal(p0.measurement, "structlog");
+                assert.deepEqual(p0.tags,   {
+                    app: 'app',
+                    source: 'test-source',
+                    process: 'web',
+                    pid: 'web.1',
+                    level: 'info',
+                    logger: 'init',
+                    event: 'Static Folder Registered'
+                });
+                assert.deepEqual(p0.timestamp, new Date("2018-03-31T17:21:12.250Z"));
                 assert.deepEqual(p0.fields, {
                     value: 1
                 });
