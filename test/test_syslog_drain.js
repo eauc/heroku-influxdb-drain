@@ -179,7 +179,7 @@ describe('Syslog drain server', function () {
                 });
                 assert.deepEqual(p0.timestamp, new Date("2017-08-31T14:47:14.000Z"));
                 assert.deepEqual(p0.fields, {
-                    count: 1
+                    value: 1
                 });
 
                 const p1 = influx_points[1];
@@ -212,7 +212,7 @@ describe('Syslog drain server', function () {
                 });
                 assert.deepEqual(p0.timestamp, new Date("2018-03-29T14:18:26.133Z"));
                 assert.deepEqual(p0.fields, {
-                    count: 1
+                    value: 1
                 });
             });
     });
