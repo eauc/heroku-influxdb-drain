@@ -242,6 +242,32 @@ function handle_heroku_errors(message, tags) {
 }
 
 /**
+ * handle structlog
+ * @param message structlog-formatted message
+ * @param tags tags associated to the message
+ * @returns {Array.<*>}
+ */
+function handle_structlog(message, tags) {
+    const key_values = message.message
+        .split("' ").reduce((acc, item) => {
+            const [key, value] = item.split("='");
+            acc[key] = value;
+            return acc;
+        }, {});
+    const all_tags = Object.assign({
+        level: key_values["level"].toLowerCase(),
+        logger: key_values["logger"],
+        event: key_values["event"]
+    }, tags);
+    return [{
+        timestamp: message.time,
+        name: "structlog",
+        tags: all_tags,
+        value: 1
+    }];
+}
+
+/**
  * Convert a syslog message to a influxDB point
  * @param message syslog ( glossy ) message
  * @param source string source of the log ( drain )
@@ -268,6 +294,8 @@ function message_to_points(message, source, tags={}) {
         result = handle_heroku_state_changed(message, all_tags);
     } else if ((message.message.indexOf("Error ") === 0) || (message.message.indexOf("at=error code=")) === 0) {
         result = handle_heroku_errors(message, all_tags);
+    } else if (message.message.indexOf("level='") === 0) {
+        result = handle_structlog(message, all_tags);
     }
     // ensure "source" was not changed, by re-setting it.
     result.forEach((p) => {
