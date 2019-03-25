@@ -1,3 +1,5 @@
+const _ = require('lodash');
+const { dot } = require('dot-object');
 const syslogParser = require('glossy').Parse;
 const filesizeParser = require('filesize-parser');
 const durationParser = require('parse-duration');
@@ -248,23 +250,18 @@ function handle_heroku_errors(message, tags) {
  * @returns {Array.<*>}
  */
 function handle_structlog(message, tags) {
-    const key_values = message.message
-        .split("' ").reduce((acc, item) => {
-            const [key, value] = item.split("='");
-            acc[key] = value;
-            return acc;
-        }, {});
-    const all_tags = Object.assign({
-        level: key_values["level"].toLowerCase(),
-        logger: key_values["logger"],
-        event: key_values["event"]
-    }, tags);
-    return [{
-        timestamp: message.time,
-        name: "structlog",
-        tags: all_tags,
-        value: 1
-    }];
+  const [header, jsonPayload] = message.originalMessage.split(" - ");
+  const payload = JSON.parse(jsonPayload);
+  const all_tags = Object.assign({
+    level: payload.level,
+  }, tags);
+  return [{
+    timestamp: message.time,
+    name: "app",
+    tags: all_tags,
+    value: 1,
+    fields: dot(_.omit(payload, 'level')),
+  }];
 }
 
 /**
@@ -294,7 +291,7 @@ function message_to_points(message, source, tags={}) {
         result = handle_heroku_state_changed(message, all_tags);
     } else if ((message.message.indexOf("Error ") === 0) || (message.message.indexOf("at=error code=")) === 0) {
         result = handle_heroku_errors(message, all_tags);
-    } else if (message.message.indexOf("level='") === 0) {
+    } else if (message.appName === "app") {
         result = handle_structlog(message, all_tags);
     }
     // ensure "source" was not changed, by re-setting it.

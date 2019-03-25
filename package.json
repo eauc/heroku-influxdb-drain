@@ -13,6 +13,7 @@
   "dependencies": {
     "basic-auth": "1.1.0",
     "body-parser": "1.17.2",
+    "dot-object": "^1.7.1",
     "express": "4.15.4",
     "filesize-parser": "1.4.1",
     "glossy": "0.1.7",
