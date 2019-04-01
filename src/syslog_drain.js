@@ -301,6 +301,9 @@ function message_to_points(message, source, tags={}) {
     if (p.tags) {
       p.tags.source = source;
     }
+    if (p.fields) {
+      p.fields = _.omitBy(p.fields, _.isNil);
+    }
   });
   return result;
 }
