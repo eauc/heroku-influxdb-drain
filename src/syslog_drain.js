@@ -277,7 +277,6 @@ function message_to_points(message, source, tags={}) {
   });
   if (message.pid) {
     all_tags["process"] = message.pid.split(".")[0];
-    all_tags["pid"] = message.pid;
   }
   let result = [];
   if (message.appName === "app") {
@@ -291,7 +290,8 @@ function message_to_points(message, source, tags={}) {
       result = handle_heroku_release(message, all_tags);
     } else if (message.message.indexOf("State changed from") !== -1) {
       result = handle_heroku_state_changed(message, all_tags);
-    } else if ((message.message.indexOf("Error ") === 0) || (message.message.indexOf("at=error code=")) === 0) {
+    } else if ((message.message.indexOf("Error ") === 0) ||
+               (message.message.indexOf("at=error code=")) === 0) {
       result = handle_heroku_errors(message, all_tags);
     }
   }
