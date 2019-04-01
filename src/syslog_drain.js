@@ -281,18 +281,20 @@ function message_to_points(message, source, tags={}) {
         all_tags["pid"] = message.pid;
     }
     let result = [];
-    if (message.message.indexOf("sample#") !== -1) {
-        result = handle_heroku_runtime_metrics(message, all_tags);
-    } else if (message.message.indexOf("protocol=https") !== -1) {
-        result = handle_heroku_router(message, all_tags);
-    } else if (message.message.indexOf("created by user") !== -1) {
-        result = handle_heroku_release(message, all_tags);
-    } else if (message.message.indexOf("State changed from") !== -1) {
-        result = handle_heroku_state_changed(message, all_tags);
-    } else if ((message.message.indexOf("Error ") === 0) || (message.message.indexOf("at=error code=")) === 0) {
-        result = handle_heroku_errors(message, all_tags);
-    } else if (message.appName === "app") {
+    if (message.appName === "app") {
         result = handle_structlog(message, all_tags);
+    } else {
+      if (message.message.indexOf("sample#") !== -1) {
+        result = handle_heroku_runtime_metrics(message, all_tags);
+      } else if (message.message.indexOf("protocol=https") !== -1) {
+        result = handle_heroku_router(message, all_tags);
+      } else if (message.message.indexOf("created by user") !== -1) {
+        result = handle_heroku_release(message, all_tags);
+      } else if (message.message.indexOf("State changed from") !== -1) {
+        result = handle_heroku_state_changed(message, all_tags);
+      } else if ((message.message.indexOf("Error ") === 0) || (message.message.indexOf("at=error code=")) === 0) {
+        result = handle_heroku_errors(message, all_tags);
+      }
     }
     // ensure "source" was not changed, by re-setting it.
     result.forEach((p) => {
