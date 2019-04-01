@@ -45,10 +45,10 @@ function parse_sample_value(value) {
     try {
       return filesizeParser(value);
     } catch (ex) {
-      return parseFloat(value);
     }
   }
-  return parseFloat(value);
+  const ret = parseFloat(value);
+  return Number.isNaN(ret) ? -1 : ret;
 }
 exports.parse_sample_value = parse_sample_value;
 
@@ -63,7 +63,8 @@ function parse_duration_value(value) {
     return durationParser(value);
   } catch (ex) {
     try {
-      return parseFloat(value);
+      const ret = parseFloat(value);
+      return Number.isNaN(ret) ? -1 : ret;
     } catch (ex) {
       return value;
     }
