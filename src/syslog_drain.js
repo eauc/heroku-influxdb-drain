@@ -251,17 +251,22 @@ function handle_heroku_errors(message, tags) {
  */
 function handle_structlog(message, tags) {
   const [header, jsonPayload] = message.originalMessage.split(" - ");
-  const payload = JSON.parse(jsonPayload);
-  const all_tags = Object.assign({
-    level: payload.level,
-  }, tags);
-  return [{
-    timestamp: message.time,
-    name: "app",
-    tags: all_tags,
-    value: 1,
-    fields: dot(_.omit(payload, 'level')),
-  }];
+  try {
+    const payload = JSON.parse(jsonPayload);
+    const all_tags = Object.assign({
+      level: payload.level,
+    }, tags);
+    return [{
+      timestamp: message.time,
+      name: "app",
+      tags: all_tags,
+      value: 1,
+      fields: dot(_.omit(payload, 'level')),
+    }];
+  } catch (error) {
+    console.log('could not parse log', message.originalMessage);
+    return [];
+  }
 }
 
 /**
@@ -281,14 +286,16 @@ function message_to_points(message, source, tags={}) {
   }
   let result = [];
   if (message.appName === "app") {
-    result = handle_structlog(message, all_tags);
+    if (message.message.indexOf("created by user") !== -1) {
+      result = handle_heroku_release(message, all_tags);
+    } else {
+      result = handle_structlog(message, all_tags);
+    }
   } else {
     if (message.message.indexOf("sample#") !== -1) {
       result = handle_heroku_runtime_metrics(message, all_tags);
     } else if (message.message.indexOf("protocol=https") !== -1) {
       result = handle_heroku_router(message, all_tags);
-    } else if (message.message.indexOf("created by user") !== -1) {
-      result = handle_heroku_release(message, all_tags);
     } else if (message.message.indexOf("State changed from") !== -1) {
       result = handle_heroku_state_changed(message, all_tags);
     } else if ((message.message.indexOf("Error ") === 0) ||
