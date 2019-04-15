@@ -260,10 +260,7 @@ function handle_structlog(message, tags) {
       name: "app",
       tags: all_tags,
       value: 1,
-      fields: _.mapValues(
-        _.omit(payload, 'level'),
-        (value) => (typeof value === 'object') ? JSON.stringify(value) : value,
-      ),
+      fields: _.omit(payload, 'level'),
     }];
   } catch (error) {
     console.log('could not parse log', message.originalMessage);

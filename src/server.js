@@ -1,6 +1,7 @@
 "use strict";
 
-const express = require('express');
+const _ = require("lodash");
+const express = require("express");
 const url = require("url");
 const bodyParser = require("body-parser");
 const syslog_drain = require("./syslog_drain");
@@ -9,10 +10,21 @@ const basicAuth = require('basic-auth');
 const influx = require("./influx_adaptor");
 const statusgator = require("./statusgator_adaptor");
 const monitor = require("./monitor_adaptor");
+const { MongoClient } = require("mongodb");
 
 
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
-
+const MONGODB_URI = process.env.MONGODB_URI;
+let db;
+let Logs;
+(async function() {
+  if (MONGODB_URI) {
+    console.log('Connecting to', MONGODB_URI);
+    db = (await MongoClient.connect(MONGODB_URI)).db();
+    Logs = db.collection('logs');
+    console.log('Connected to', MONGODB_URI);
+  }
+})();
 
 /*
  * Point structure:
@@ -41,9 +53,26 @@ function auth_middleware(req, res, next) {
     next();
 }
 
+function flattenFields(point) {
+  return {
+    ...point,
+    fields: _.mapValues(
+      point.fields,
+      (val) => (typeof val === "object") ? _.truncate(JSON.stringify(val), 200) : val,
+    ),
+  };
+}
+
+function isPointLoggable({ name }) {
+  return name === "app" || name === "heroku_release";
+}
 
 function process_points(app, points) {
-    return influx.send(points);
+  const logs = _.filter(points, isPointLoggable);
+  return Promise.all([
+    influx.send(_.map(points, flattenFields)),
+    Logs && logs.length > 0 && Logs.insertMany(logs),
+  ]);
 }
 
 function extract_tags(req) {
