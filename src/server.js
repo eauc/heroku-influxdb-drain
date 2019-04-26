@@ -67,11 +67,20 @@ function isPointLoggable({ name }) {
   return name === "app" || name === "heroku_release";
 }
 
+function formatLog(log) {
+  return {
+    _timestamp: log.timestamp,
+    _type: log.name,
+    ...log.tags,
+    ...log.fields,
+  };
+}
+
 function process_points(app, points) {
   const logs = _.filter(points, isPointLoggable);
   return Promise.all([
     influx.send(_.map(points, flattenFields)),
-    Logs && logs.length > 0 && Logs.insertMany(logs),
+    Logs && logs.length > 0 && Logs.insertMany(_.map(logs, formatLog)),
   ]);
 }
 

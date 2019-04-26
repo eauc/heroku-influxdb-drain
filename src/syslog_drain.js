@@ -214,7 +214,7 @@ function handle_heroku_state_changed(message, tags) {
     {
       timestamp: message.time,
       name: "heroku_state",
-      tags: tags,
+      tags,
       value: DYNO_STATES[result[1]] || -10,
       fields: {
         old_state: result[0],
@@ -248,19 +248,21 @@ function handle_heroku_errors(message, tags) {
  * @param tags tags associated to the message
  * @returns {Array.<*>}
  */
-function handle_structlog(message, tags) {
+function handle_structlog(message, baseTags) {
   const [header, jsonPayload] = message.originalMessage.split(" - ");
   try {
     const payload = JSON.parse(jsonPayload);
-    const all_tags = Object.assign({
-      level: payload.level,
-    }, tags);
+    const tags = {
+      ...baseTags,
+      ..._.pickBy(payload, (value, key) => (typeof value === 'string') && key !== 'time'),
+    };
+    const fields = _.omitBy(payload, (value, key) => (typeof value === 'string'));
     return [{
       timestamp: message.time,
       name: "app",
-      tags: all_tags,
+      tags,
       value: 1,
-      fields: _.omit(payload, 'level'),
+      fields,
     }];
   } catch (error) {
     console.log('could not parse log', message.originalMessage);
@@ -276,36 +278,30 @@ function handle_structlog(message, tags) {
  * @returns Array of influx IPoint
  */
 function message_to_points(message, source, tags={}) {
-  const all_tags = Object.assign({}, tags, {
-    app: message.appName,
-    source: source
-  });
-  if (message.pid) {
-    all_tags["process"] = message.pid.split(".")[0];
-  }
   let result = [];
   if (message.appName === "app") {
     if (message.message.indexOf("created by user") !== -1) {
-      result = handle_heroku_release(message, all_tags);
+      result = handle_heroku_release(message, tags);
     } else {
-      result = handle_structlog(message, all_tags);
+      result = handle_structlog(message, tags);
     }
   } else {
     if (message.message.indexOf("sample#") !== -1) {
-      result = handle_heroku_runtime_metrics(message, all_tags);
+      result = handle_heroku_runtime_metrics(message, tags);
     } else if (message.message.indexOf("protocol=https") !== -1) {
-      result = handle_heroku_router(message, all_tags);
+      result = handle_heroku_router(message, tags);
     } else if (message.message.indexOf("State changed from") !== -1) {
-      result = handle_heroku_state_changed(message, all_tags);
+      result = handle_heroku_state_changed(message, tags);
     } else if ((message.message.indexOf("Error ") === 0) ||
                (message.message.indexOf("at=error code=")) === 0) {
-      result = handle_heroku_errors(message, all_tags);
+      result = handle_heroku_errors(message, tags);
     }
   }
-  // ensure "source" was not changed, by re-setting it.
   result.forEach((p) => {
+    // ensure "source" was not changed, by re-setting it.
     if (p.tags) {
       p.tags.source = source;
+      p.tags = _.omitBy(p.tags, _.isNil);
     }
     if (p.fields) {
       p.fields = _.omitBy(p.fields, _.isNil);
