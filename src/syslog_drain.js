@@ -242,6 +242,16 @@ function handle_heroku_errors(message, tags) {
   ];
 }
 
+const LOGS_TAGS = [
+  "customerId",
+  "level",
+  "methodName",
+  "msg",
+  "source",
+  "subName",
+  "userId",
+];
+
 /**
  * handle structlog
  * @param message structlog-formatted message
@@ -254,15 +264,18 @@ function handle_structlog(message, baseTags) {
     const payload = JSON.parse(jsonPayload);
     const tags = {
       ...baseTags,
-      ..._.pickBy(payload, (value, key) => (typeof value === 'string') && key !== 'time'),
+      ..._.pick(payload, LOGS_TAGS),
     };
-    const fields = _.omitBy(payload, (value, key) => (typeof value === 'string'));
+    const fields = {
+      ..._.omit(payload, LOGS_TAGS),
+      ..._.mapKeys(_.pick(payload, LOGS_TAGS), (value, key) => `field_${key}`),
+    };
     return [{
       timestamp: message.time,
       name: "app",
-      tags,
+      tags: _.mapKeys(tags, (value, key) => _.camelCase(key)),
       value: 1,
-      fields,
+      fields: _.mapKeys(fields, (value, key) => _.camelCase(key)),
     }];
   } catch (error) {
     console.log('could not parse log', message.originalMessage);
