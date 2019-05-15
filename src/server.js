@@ -11,13 +11,13 @@ const influx = require("./influx_adaptor");
 const statusgator = require("./statusgator_adaptor");
 const monitor = require("./monitor_adaptor");
 const { MongoClient } = require("mongodb");
-
+const mje = require('mongo-json-escape');
 
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 const MONGODB_URI = process.env.MONGODB_URI;
 let db;
 let Logs;
-(async function() {
+(async function () {
   if (MONGODB_URI) {
     console.log('Connecting to', MONGODB_URI);
     db = (await MongoClient.connect(MONGODB_URI)).db();
@@ -68,12 +68,12 @@ function isPointLoggable({ name }) {
 }
 
 function formatLog(log) {
-  return {
+  return mje.escape({
     _timestamp: log.timestamp,
     _type: log.name,
     ...log.tags,
     ...log.fields,
-  };
+  });
 }
 
 function process_points(app, points) {
