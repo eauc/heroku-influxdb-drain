@@ -262,6 +262,8 @@ function handle_structlog(message, baseTags) {
   const [header, jsonPayload] = message.originalMessage.split(" - ");
   try {
     const payload = JSON.parse(jsonPayload);
+    // force log level to integer
+    payload.level = isNaN(payload.level) ? 0 : parseInt(payload.level);
     const tags = {
       ...baseTags,
       ..._.pick(payload, LOGS_TAGS),
