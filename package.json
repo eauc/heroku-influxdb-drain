@@ -23,7 +23,7 @@
     "mongo-json-escape": "0.0.1",
     "mongodb": "^3.2.3",
     "parse-duration": "0.1.1",
-    "superagent": "3.6.0"
+    "superagent": "3.7.0"
   },
   "devDependencies": {
     "eslint": "4.5.0",
