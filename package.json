@@ -18,7 +18,7 @@
     "filesize-parser": "1.4.1",
     "glossy": "0.1.7",
     "influx": "5.0.7",
-    "lodash": "4.17.4",
+    "lodash": "4.17.21",
     "loglevel": "1.4.1",
     "mongo-json-escape": "0.0.1",
     "mongodb": "^3.2.3",
